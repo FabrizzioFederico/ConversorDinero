@@ -3,9 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Conversor de Moneda</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    
+    <div class="container">
+        <h1>Conversor de Moneda</h1>
+        <div class="converter-box" id="converterBox">
+            <input type="number" id="amount" class="input-amount" placeholder="Ingrese cantidad">
+            
+            <div class="currency-selectors">
+                <select id="fromCurrency" class="currency-select">
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                </select>
+
+                <button id="swapButton" class="swap-btn">⇄</button>
+
+                <select id="toCurrency" class="currency-select">
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                    <option value="GBP">GBP</option>
+                </select>
+            </div>
+
+            <button id="convertButton" class="convert-btn">Convertir</button>
+            
+            <div id="result" class="result">
+                <span id="convertedAmount">0.00</span>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
