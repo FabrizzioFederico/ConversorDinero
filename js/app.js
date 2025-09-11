@@ -1,6 +1,3 @@
-// Variables globales para almacenar las tasas de cambio
-let exchangeRates = {};
-
 // Elementos del DOM
 const amountInput = document.getElementById('amount');
 const fromCurrencySelect = document.getElementById('fromCurrency');
@@ -10,147 +7,15 @@ const swapButton = document.getElementById('swapButton');
 const resultDiv = document.getElementById('result');
 const convertedAmountSpan = document.getElementById('convertedAmount');
 
-// URL base de la API
-const API_BASE_URL = 'https://open.er-api.com/v6/latest';
+// Estado de la aplicación
+let isLoading = false;
 
-// Monedas disponibles
-const currencies = [
-    // Monedas principales
-    { code: 'USD', name: 'Dólar Estadounidense' },
-    { code: 'EUR', name: 'Euro' },
-    { code: 'GBP', name: 'Libra Esterlina' },
-    { code: 'JPY', name: 'Yen Japonés' },
-    { code: 'CHF', name: 'Franco Suizo' },
-    { code: 'CAD', name: 'Dólar Canadiense' },
-    { code: 'AUD', name: 'Dólar Australiano' },
-    { code: 'NZD', name: 'Dólar Neozelandés' },
-    
-    // Monedas asiáticas
-    { code: 'CNY', name: 'Yuan Chino' },
-    { code: 'KRW', name: 'Won Surcoreano' },
-    { code: 'SGD', name: 'Dólar de Singapur' },
-    { code: 'HKD', name: 'Dólar de Hong Kong' },
-    { code: 'THB', name: 'Baht Tailandés' },
-    { code: 'INR', name: 'Rupia India' },
-    { code: 'IDR', name: 'Rupia Indonesia' },
-    { code: 'MYR', name: 'Ringgit Malayo' },
-    { code: 'PHP', name: 'Peso Filipino' },
-    { code: 'VND', name: 'Dong Vietnamita' },
-    { code: 'PKR', name: 'Rupia Pakistaní' },
-    { code: 'LKR', name: 'Rupia de Sri Lanka' },
-    { code: 'BDT', name: 'Taka de Bangladesh' },
-    
-    // Monedas latinoamericanas
-    { code: 'ARS', name: 'Peso Argentino' },
-    { code: 'BRL', name: 'Real Brasileño' },
-    { code: 'MXN', name: 'Peso Mexicano' },
-    { code: 'CLP', name: 'Peso Chileno' },
-    { code: 'COP', name: 'Peso Colombiano' },
-    { code: 'PEN', name: 'Sol Peruano' },
-    { code: 'UYU', name: 'Peso Uruguayo' },
-    { code: 'BOB', name: 'Boliviano' },
-    { code: 'PYG', name: 'Guaraní Paraguayo' },
-    { code: 'VES', name: 'Bolívar Venezolano' },
-    { code: 'GTQ', name: 'Quetzal Guatemalteco' },
-    { code: 'CRC', name: 'Colón Costarricense' },
-    { code: 'PAB', name: 'Balboa Panameño' },
-    { code: 'HNL', name: 'Lempira Hondureño' },
-    { code: 'NIO', name: 'Córdoba Nicaragüense' },
-    { code: 'SVC', name: 'Colón Salvadoreño' },
-    { code: 'DOP', name: 'Peso Dominicano' },
-    { code: 'JMD', name: 'Dólar Jamaiquino' },
-    { code: 'TTD', name: 'Dólar de Trinidad y Tobago' },
-    
-    // Monedas europeas (no euro)
-    { code: 'NOK', name: 'Corona Noruega' },
-    { code: 'SEK', name: 'Corona Sueca' },
-    { code: 'DKK', name: 'Corona Danesa' },
-    { code: 'ISK', name: 'Corona Islandesa' },
-    { code: 'PLN', name: 'Zloty Polaco' },
-    { code: 'CZK', name: 'Corona Checa' },
-    { code: 'HUF', name: 'Forint Húngaro' },
-    { code: 'RON', name: 'Leu Rumano' },
-    { code: 'BGN', name: 'Lev Búlgaro' },
-    { code: 'HRK', name: 'Kuna Croata' },
-    { code: 'RSD', name: 'Dinar Serbio' },
-    { code: 'BAM', name: 'Marco Bosnio' },
-    { code: 'MKD', name: 'Denar Macedonio' },
-    { code: 'ALL', name: 'Lek Albanés' },
-    { code: 'MDL', name: 'Leu Moldavo' },
-    { code: 'UAH', name: 'Grivna Ucraniana' },
-    { code: 'BYN', name: 'Rublo Bielorruso' },
-    { code: 'RUB', name: 'Rublo Ruso' },
-    { code: 'TRY', name: 'Lira Turca' },
-    
-    // Monedas africanas
-    { code: 'ZAR', name: 'Rand Sudafricano' },
-    { code: 'NGN', name: 'Naira Nigeriana' },
-    { code: 'EGP', name: 'Libra Egipcia' },
-    { code: 'KES', name: 'Chelín Keniano' },
-    { code: 'UGX', name: 'Chelín Ugandés' },
-    { code: 'TZS', name: 'Chelín Tanzano' },
-    { code: 'ETB', name: 'Birr Etíope' },
-    { code: 'GHS', name: 'Cedi Ghanés' },
-    { code: 'XOF', name: 'Franco CFA Occidental' },
-    { code: 'XAF', name: 'Franco CFA Central' },
-    { code: 'MAD', name: 'Dirham Marroquí' },
-    { code: 'TND', name: 'Dinar Tunecino' },
-    { code: 'DZD', name: 'Dinar Argelino' },
-    { code: 'LYD', name: 'Dinar Libio' },
-    { code: 'SDG', name: 'Libra Sudanesa' },
-    { code: 'ZMW', name: 'Kwacha Zambiano' },
-    { code: 'BWP', name: 'Pula de Botsuana' },
-    { code: 'NAD', name: 'Dólar Namibio' },
-    { code: 'SZL', name: 'Lilangeni de Esuatini' },
-    { code: 'LSL', name: 'Loti de Lesoto' },
-    { code: 'MWK', name: 'Kwacha Malauí' },
-    { code: 'MZN', name: 'Metical Mozambiqueño' },
-    { code: 'AOA', name: 'Kwanza Angoleño' },
-    
-    // Monedas de Medio Oriente
-    { code: 'SAR', name: 'Riyal Saudí' },
-    { code: 'AED', name: 'Dirham de los EAU' },
-    { code: 'QAR', name: 'Riyal Qatarí' },
-    { code: 'KWD', name: 'Dinar Kuwaití' },
-    { code: 'BHD', name: 'Dinar Bahreiní' },
-    { code: 'OMR', name: 'Rial Omaní' },
-    { code: 'JOD', name: 'Dinar Jordano' },
-    { code: 'LBP', name: 'Libra Libanesa' },
-    { code: 'SYP', name: 'Libra Siria' },
-    { code: 'IQD', name: 'Dinar Iraquí' },
-    { code: 'IRR', name: 'Rial Iraní' },
-    { code: 'AFN', name: 'Afgani Afgano' },
-    { code: 'ILS', name: 'Nuevo Shekel Israelí' },
-    
-    // Monedas de Oceanía
-    { code: 'FJD', name: 'Dólar Fiyiano' },
-    { code: 'PGK', name: 'Kina de Papúa Nueva Guinea' },
-    { code: 'SBD', name: 'Dólar de las Islas Salomón' },
-    { code: 'VUV', name: 'Vatu de Vanuatu' },
-    { code: 'WST', name: 'Tala Samoano' },
-    { code: 'TOP', name: 'Pa\'anga Tongano' },
-    
-    // Otras monedas importantes
-    { code: 'RWF', name: 'Franco Ruandés' },
-    { code: 'BIF', name: 'Franco Burundés' },
-    { code: 'DJF', name: 'Franco Yibutiano' },
-    { code: 'ERN', name: 'Nakfa Eritreo' },
-    { code: 'SOS', name: 'Chelín Somalí' },
-    { code: 'SCR', name: 'Rupia de Seychelles' },
-    { code: 'MUR', name: 'Rupia Mauriciana' },
-    { code: 'MVR', name: 'Rufiyaa Maldiva' },
-    { code: 'KMF', name: 'Franco Comorense' },
-    { code: 'MGA', name: 'Ariary Malgache' },
-    { code: 'STN', name: 'Dobra de Santo Tomé' },
-    { code: 'CVE', name: 'Escudo Caboverdiano' },
-    { code: 'GNF', name: 'Franco Guineano' },
-    { code: 'SLE', name: 'Leone de Sierra Leona' },
-    { code: 'LRD', name: 'Dólar Liberiano' },
-    { code: 'GMD', name: 'Dalasi Gambiano' }
-];
-
-// Función para cargar las monedas en los selectores
+/**
+ * Función para cargar las monedas en los selectores
+ */
 function loadCurrencies() {
+    const currencies = window.CurrencyAPI.getCurrencies();
+    
     // Limpiar opciones existentes
     fromCurrencySelect.innerHTML = '';
     toCurrencySelect.innerHTML = '';
@@ -173,73 +38,77 @@ function loadCurrencies() {
     toCurrencySelect.value = 'EUR';
 }
 
-// Función para obtener las tasas de cambio desde la API
-async function fetchExchangeRates(baseCurrency = 'USD') {
-    try {
-        const response = await fetch(`${API_BASE_URL}/${baseCurrency}`);
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.result === 'success') {
-            exchangeRates = data.rates;
-            return data.rates;
-        } else {
-            throw new Error('Error en la respuesta de la API');
-        }
-    } catch (error) {
-        console.error('Error al obtener tasas de cambio:', error);
-        showError('Error al obtener las tasas de cambio. Por favor, intente nuevamente.');
-        return null;
-    }
-}
-
-// Función para convertir moneda
-function convertCurrency(amount, fromCurrency, toCurrency, rates) {
-    if (fromCurrency === toCurrency) {
-        return amount;
-    }
-    
-    // Si la moneda base es USD, usamos directamente las tasas
-    if (fromCurrency === 'USD') {
-        return amount * rates[toCurrency];
-    }
-    
-    // Si convertimos a USD desde otra moneda
-    if (toCurrency === 'USD') {
-        return amount / rates[fromCurrency];
-    }
-    
-    // Para conversión entre dos monedas que no son USD
-    // Primero convertimos a USD, luego a la moneda objetivo
-    const usdAmount = amount / rates[fromCurrency];
-    return usdAmount * rates[toCurrency];
-}
-
-// Función para mostrar el resultado
+/**
+ * Función para mostrar el resultado de la conversión
+ * @param {number} amount - Cantidad original
+ * @param {string} fromCurrency - Moneda de origen
+ * @param {string} toCurrency - Moneda de destino
+ * @param {number} convertedAmount - Cantidad convertida
+ */
 function displayResult(amount, fromCurrency, toCurrency, convertedAmount) {
-    const formattedAmount = convertedAmount.toFixed(2);
-    convertedAmountSpan.textContent = `${amount} ${fromCurrency} = ${formattedAmount} ${toCurrency}`;
+    const formattedAmount = convertedAmount.toLocaleString('es-ES', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    const originalFormatted = amount.toLocaleString('es-ES', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    convertedAmountSpan.textContent = `${originalFormatted} ${fromCurrency} = ${formattedAmount} ${toCurrency}`;
+    convertedAmountSpan.style.color = '#333';
     resultDiv.style.display = 'block';
+    
+    // Agregar animación de resultado
+    resultDiv.classList.add('result-animation');
+    setTimeout(() => {
+        resultDiv.classList.remove('result-animation');
+    }, 500);
 }
 
-// Función para mostrar errores
+/**
+ * Función para mostrar errores
+ * @param {string} message - Mensaje de error
+ */
 function showError(message) {
     convertedAmountSpan.textContent = message;
     convertedAmountSpan.style.color = '#e74c3c';
     resultDiv.style.display = 'block';
+    
+    // Agregar animación de error
+    resultDiv.classList.add('error-animation');
+    setTimeout(() => {
+        resultDiv.classList.remove('error-animation');
+    }, 500);
 }
 
-// Función para limpiar errores
-function clearError() {
-    convertedAmountSpan.style.color = '#333';
+/**
+ * Función para mostrar estado de carga
+ */
+function showLoading() {
+    convertedAmountSpan.textContent = 'Convirtiendo...';
+    convertedAmountSpan.style.color = '#666';
+    resultDiv.style.display = 'block';
+    convertButton.disabled = true;
+    isLoading = true;
 }
 
-// Función principal de conversión
+/**
+ * Función para ocultar estado de carga
+ */
+function hideLoading() {
+    convertButton.disabled = false;
+    isLoading = false;
+}
+
+/**
+ * Función principal de conversión
+ */
 async function performConversion() {
+    // Prevenir múltiples conversiones simultáneas
+    if (isLoading) return;
+    
     const amount = parseFloat(amountInput.value);
     const fromCurrency = fromCurrencySelect.value;
     const toCurrency = toCurrencySelect.value;
@@ -250,89 +119,224 @@ async function performConversion() {
         return;
     }
     
-    // Limpiar errores previos
-    clearError();
+    if (!fromCurrency || !toCurrency) {
+        showError('Por favor, seleccione las monedas de origen y destino');
+        return;
+    }
     
-    // Mostrar indicador de carga
-    convertedAmountSpan.textContent = 'Convirtiendo...';
-    convertButton.disabled = true;
+    // Mostrar estado de carga
+    showLoading();
     
     try {
-        // Obtener tasas de cambio (usando USD como base)
-        const rates = await fetchExchangeRates('USD');
-        
-        if (!rates) {
-            convertButton.disabled = false;
-            return;
-        }
+        // Obtener tasas de cambio actuales
+        const rates = await window.CurrencyAPI.fetchExchangeRates('USD');
         
         // Realizar conversión
-        const convertedAmount = convertCurrency(amount, fromCurrency, toCurrency, rates);
+        const convertedAmount = window.CurrencyAPI.convertCurrency(
+            amount, 
+            fromCurrency, 
+            toCurrency, 
+            rates
+        );
         
         // Mostrar resultado
         displayResult(amount, fromCurrency, toCurrency, convertedAmount);
         
+        // Guardar última conversión en localStorage
+        saveLastConversion(amount, fromCurrency, toCurrency, convertedAmount);
+        
     } catch (error) {
         console.error('Error en la conversión:', error);
-        showError('Error al realizar la conversión. Por favor, intente nuevamente.');
+        showError(`Error: ${error.message}`);
     } finally {
-        convertButton.disabled = false;
+        hideLoading();
     }
 }
 
-// Función para intercambiar monedas
+/**
+ * Función para intercambiar monedas
+ */
 function swapCurrencies() {
+    if (isLoading) return;
+    
     const fromValue = fromCurrencySelect.value;
     const toValue = toCurrencySelect.value;
     
     fromCurrencySelect.value = toValue;
     toCurrencySelect.value = fromValue;
     
+    // Agregar animación al botón de intercambio
+    swapButton.classList.add('swap-animation');
+    setTimeout(() => {
+        swapButton.classList.remove('swap-animation');
+    }, 300);
+    
     // Si hay un resultado visible, reconvertir automáticamente
-    if (resultDiv.style.display === 'block' && amountInput.value) {
-        performConversion();
+    if (resultDiv.style.display === 'block' && amountInput.value && !isLoading) {
+        setTimeout(performConversion, 300); // Delay para que se vea la animación
     }
 }
 
-// Función para validar entrada numérica
+/**
+ * Función para validar entrada numérica
+ * @param {Event} event - Evento de input
+ */
 function validateNumericInput(event) {
     const value = event.target.value;
     
-    // Permitir solo números y punto decimal
-    if (!/^\d*\.?\d*$/.test(value)) {
+    // Permitir solo números, punto decimal y coma (para separador decimal)
+    if (!/^[\d.,]*$/.test(value)) {
+        event.target.value = value.slice(0, -1);
+        return;
+    }
+    
+    // Prevenir múltiples puntos decimales
+    const decimalCount = (value.match(/[.,]/g) || []).length;
+    if (decimalCount > 1) {
         event.target.value = value.slice(0, -1);
     }
 }
 
-// Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Cargar monedas en los selectores
-    loadCurrencies();
+/**
+ * Función para formatear el input mientras se escribe
+ * @param {Event} event - Evento de input
+ */
+function formatInput(event) {
+    let value = event.target.value;
     
-    // Obtener tasas iniciales
-    fetchExchangeRates();
+    // Reemplazar comas por puntos para el cálculo
+    value = value.replace(',', '.');
     
-    // Event listener para el botón de conversión
+    // Actualizar el valor del input
+    event.target.value = value;
+}
+
+/**
+ * Función para guardar la última conversión
+ * @param {number} amount - Cantidad
+ * @param {string} from - Moneda de origen
+ * @param {string} to - Moneda de destino
+ * @param {number} result - Resultado
+ */
+function saveLastConversion(amount, from, to, result) {
+    const conversion = {
+        amount,
+        from,
+        to,
+        result,
+        timestamp: new Date().toISOString()
+    };
+    
+    try {
+        localStorage.setItem('lastConversion', JSON.stringify(conversion));
+    } catch (error) {
+        console.warn('No se pudo guardar la conversión en localStorage:', error);
+    }
+}
+
+/**
+ * Función para cargar la última conversión
+ */
+function loadLastConversion() {
+    try {
+        const lastConversion = localStorage.getItem('lastConversion');
+        if (lastConversion) {
+            const conversion = JSON.parse(lastConversion);
+            
+            // Solo cargar si fue en las últimas 24 horas
+            const lastTime = new Date(conversion.timestamp);
+            const now = new Date();
+            const hoursDiff = (now - lastTime) / (1000 * 60 * 60);
+            
+            if (hoursDiff < 24) {
+                amountInput.value = conversion.amount;
+                fromCurrencySelect.value = conversion.from;
+                toCurrencySelect.value = conversion.to;
+                displayResult(conversion.amount, conversion.from, conversion.to, conversion.result);
+            }
+        }
+    } catch (error) {
+        console.warn('No se pudo cargar la última conversión:', error);
+    }
+}
+
+/**
+ * Función para limpiar el formulario
+ */
+function clearForm() {
+    amountInput.value = '';
+    resultDiv.style.display = 'none';
+    fromCurrencySelect.value = 'USD';
+    toCurrencySelect.value = 'EUR';
+}
+
+/**
+ * Función para manejar atajos de teclado
+ * @param {KeyboardEvent} event - Evento de teclado
+ */
+function handleKeyboardShortcuts(event) {
+    // Ctrl/Cmd + Enter para convertir
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+        event.preventDefault();
+        performConversion();
+    }
+    
+    // Ctrl/Cmd + S para intercambiar
+    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        event.preventDefault();
+        swapCurrencies();
+    }
+    
+    // Escape para limpiar
+    if (event.key === 'Escape') {
+        clearForm();
+    }
+}
+
+// Event Listeners y inicialización
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 Iniciando Conversor de Moneda...');
+    
+    try {
+        // Cargar monedas en los selectores
+        loadCurrencies();
+        console.log('✅ Monedas cargadas');
+        
+        // Obtener tasas iniciales
+        await window.CurrencyAPI.fetchExchangeRates();
+        console.log('✅ Tasas de cambio iniciales obtenidas');
+        
+        // Iniciar actualización automática
+        window.CurrencyAPI.startAutoUpdate(10);
+        
+        // Cargar última conversión si existe
+        loadLastConversion();
+        
+    } catch (error) {
+        console.error('❌ Error al inicializar:', error);
+        showError('Error al inicializar la aplicación. Verifique su conexión a internet.');
+    }
+    
+    // Event listeners para botones
     convertButton.addEventListener('click', performConversion);
-    
-    // Event listener para el botón de intercambio
     swapButton.addEventListener('click', swapCurrencies);
     
-    // Event listener para conversión automática al cambiar monedas
+    // Event listeners para cambios automáticos
     fromCurrencySelect.addEventListener('change', function() {
-        if (amountInput.value && resultDiv.style.display === 'block') {
+        if (amountInput.value && resultDiv.style.display === 'block' && !isLoading) {
             performConversion();
         }
     });
     
     toCurrencySelect.addEventListener('change', function() {
-        if (amountInput.value && resultDiv.style.display === 'block') {
+        if (amountInput.value && resultDiv.style.display === 'block' && !isLoading) {
             performConversion();
         }
     });
     
-    // Event listener para validar entrada numérica
+    // Event listeners para el input
     amountInput.addEventListener('input', validateNumericInput);
+    amountInput.addEventListener('input', formatInput);
     
     // Event listener para conversión con Enter
     amountInput.addEventListener('keypress', function(event) {
@@ -343,23 +347,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Event listener para limpiar resultado cuando se borra el input
     amountInput.addEventListener('input', function() {
-        if (!this.value) {
+        if (!this.value.trim()) {
             resultDiv.style.display = 'none';
         }
     });
+    
+    // Event listeners para atajos de teclado
+    document.addEventListener('keydown', handleKeyboardShortcuts);
+    
+    // Event listener para foco automático
+    amountInput.focus();
+    
+    console.log('✅ Conversor de Moneda iniciado correctamente');
 });
-
-// Función para actualizar tasas de cambio cada 10 minutos
-setInterval(() => {
-    fetchExchangeRates();
-    console.log('Tasas de cambio actualizadas');
-}, 600000); // 10 minutos
-
-// Exportar funciones para testing (opcional)
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        convertCurrency,
-        fetchExchangeRates,
-        currencies
-    };
-}
