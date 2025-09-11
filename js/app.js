@@ -3,6 +3,7 @@ const amountInput = document.getElementById('amount');
 const fromCurrencySelect = document.getElementById('fromCurrency');
 const toCurrencySelect = document.getElementById('toCurrency');
 const convertButton = document.getElementById('convertButton');
+const cancelEditButton = document.getElementById('cancelEditButton');
 const swapButton = document.getElementById('swapButton');
 const resultDiv = document.getElementById('result');
 const convertedAmountSpan = document.getElementById('convertedAmount');
@@ -13,7 +14,31 @@ const closeMenu = document.getElementById('closeMenu');
 const historyList = document.getElementById('historyList');
 const themeToggle = document.getElementById('themeToggle');
 const exchangeRateValue = document.getElementById('exchangeRateValue');
-let ITEMS_PER_PAGE = window.innerWidth <= 768 ? 4 : 6;
+// Función para calcular items por página basado en el tamaño de pantalla
+function calculateItemsPerPage() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    // Mobile: pantallas pequeñas
+    if (width <= 768) {
+        return 6;
+    }
+    
+    // Tablets en modo portrait o laptops pequeñas
+    if (width <= 1024 || height <= 768) {
+        return 4;
+    }
+    
+    // Desktop/laptops grandes: pantallas más grandes
+    if (width <= 1440) {
+        return 6;
+    }
+    
+    // Pantallas muy grandes (4K, ultrawide, etc.)
+    return 8;
+}
+
+let ITEMS_PER_PAGE = calculateItemsPerPage();
 let currentPage = 1;
 const prevPageBtn = document.getElementById('prevPage');
 const nextPageBtn = document.getElementById('nextPage');
@@ -472,23 +497,37 @@ function toggleMenu() {
     menuToggle.classList.toggle('active');
     sidebar.classList.toggle('active');
     overlay.classList.toggle('active');
+    
+    // Ocultar el botón hamburguesa cuando se abre el menú
+    if (sidebar.classList.contains('active')) {
+        menuToggle.classList.add('hidden');
+    }
 }
 
 function closeMenuHandler() {
     menuToggle.classList.remove('active');
     sidebar.classList.remove('active');
     overlay.classList.remove('active');
+    
+    // Mostrar el botón hamburguesa cuando se cierra el menú
+    menuToggle.classList.remove('hidden');
 }
 
 // Funciones para el modo noche
 function toggleTheme() {
-    // Agregar clase de animación global
+    // Prevenir múltiples clics durante la transición
+    if (document.body.classList.contains('theme-changing')) {
+        return;
+    }
+    
+    // Agregar clase de animación global tanto a html como a body
+    document.documentElement.classList.add('theme-changing');
     document.body.classList.add('theme-changing');
     
-    // Agregar animación al botón
+    // Agregar animación al botón con mayor duración
     themeToggle.classList.add('rotating');
     
-    // Pequeño delay para efecto más suave
+    // Transición más fluida con múltiples pasos
     setTimeout(() => {
         isDarkMode = !isDarkMode;
         
@@ -504,20 +543,24 @@ function toggleTheme() {
         }
         
         console.log(`🎨 Tema cambiado a: ${isDarkMode ? 'Oscuro' : 'Claro'}`);
-    }, 100);
+    }, 150); // Delay más corto para cambio más natural
     
-    // Remover animaciones
+    // Remover animaciones con timing optimizado
     setTimeout(() => {
         themeToggle.classList.remove('rotating');
+    }, 600);
+    
+    setTimeout(() => {
+        document.documentElement.classList.remove('theme-changing');
         document.body.classList.remove('theme-changing');
-    }, 500);
+    }, 800); // Tiempo extendido para transición más suave
 }
 
 function loadTheme() {
     const savedTheme = localStorage.getItem('darkMode');
     
-    // Aplicar tema sin transición al cargar para evitar flash
-    document.documentElement.style.setProperty('--transition-duration', '0s');
+    // Aplicar tema sin transición al cargar para evitar flash, pero con duración más corta
+    document.documentElement.style.setProperty('--theme-transition-duration', '0.1s');
     
     if (savedTheme === 'true') {
         isDarkMode = true;
@@ -529,9 +572,11 @@ function loadTheme() {
         themeToggle.querySelector('.theme-icon').textContent = '🌙';
     }
     
-    // Restaurar transiciones después del primer frame
+    // Restaurar transiciones suaves después del primer frame
     requestAnimationFrame(() => {
-        document.documentElement.style.removeProperty('--transition-duration');
+        requestAnimationFrame(() => {
+            document.documentElement.style.removeProperty('--theme-transition-duration');
+        });
     });
     
     console.log(`🎨 Tema cargado: ${isDarkMode ? 'Oscuro' : 'Claro'}`);
@@ -623,6 +668,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Modificar la función deleteConversion
 function deleteConversion(id) {
+    // Si se está eliminando la conversión que se está editando, cancelar la edición
+    if (currentEditId === id) {
+        cancelEdit();
+    }
+    
     let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
     history = history.filter(item => item.id !== id);
     localStorage.setItem('conversionHistory', JSON.stringify(history));
@@ -645,11 +695,18 @@ function editConversion(id) {
         currentEditId = id;
         amountInput.value = conversion.amount;
         fromCurrencySelect.value = conversion.fromCurrency;
-        toCurrency.value = conversion.toCurrency;
+        toCurrencySelect.value = conversion.toCurrency;
         
-        // Cambiar el texto y estilo del botón
+        // Cambiar el texto y estilo del botón de convertir
         convertButton.textContent = 'Actualizar';
         convertButton.classList.add('editing');
+        
+        // Mostrar el botón de cancelar
+        cancelEditButton.style.display = 'block';
+        
+        // Actualizar banderas y tipo de cambio
+        updateFromFlag();
+        updateToFlag();
         
         // Cerrar el menú
         closeMenuHandler();
@@ -657,6 +714,24 @@ function editConversion(id) {
         // Enfocar el campo de cantidad
         amountInput.focus();
     }
+}
+
+// Nueva función para cancelar la edición
+function cancelEdit() {
+    // Resetear el estado de edición
+    currentEditId = null;
+    
+    // Restaurar el botón de convertir
+    convertButton.textContent = 'Convertir';
+    convertButton.classList.remove('editing');
+    
+    // Ocultar el botón de cancelar
+    cancelEditButton.style.display = 'none';
+    
+    // Limpiar el formulario
+    clearForm();
+    
+    console.log('✅ Edición cancelada');
 }
 
 // Asegurar que performConversion maneje correctamente la edición
@@ -701,10 +776,13 @@ async function performConversion() {
                 };
                 localStorage.setItem('conversionHistory', JSON.stringify(history));
 
-                // Resetear estado de edición
+                // Resetear estado de edición usando la función cancelEdit
                 currentEditId = null;
                 convertButton.textContent = 'Convertir';
                 convertButton.classList.remove('editing');
+                cancelEditButton.style.display = 'none';
+                
+                console.log('✅ Conversión actualizada exitosamente');
             }
         } else {
             // Crear nueva conversión
@@ -736,6 +814,10 @@ async function performConversion() {
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Iniciando Conversor de Moneda...');
     
+    // Calcular items por página para la pantalla actual
+    ITEMS_PER_PAGE = calculateItemsPerPage();
+    console.log(`📱 Pantalla detectada: ${window.innerWidth}x${window.innerHeight} - ${ITEMS_PER_PAGE} elementos por página`);
+    
     // Cargar tema guardado
     loadTheme();
     
@@ -765,6 +847,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Event listeners para botones
     convertButton.addEventListener('click', performConversion);
+    cancelEditButton.addEventListener('click', cancelEdit);
     swapButton.addEventListener('click', swapCurrencies);
     
     // Event listeners para cambios automáticos
@@ -819,9 +902,19 @@ themeToggle.addEventListener('click', toggleTheme);
 
 // Agregar listener para cambios en el tamaño de ventana
 window.addEventListener('resize', () => {
-    const newItemsPerPage = window.innerWidth <= 768 ? 6 : 4;
+    const newItemsPerPage = calculateItemsPerPage();
     if (newItemsPerPage !== ITEMS_PER_PAGE) {
         ITEMS_PER_PAGE = newItemsPerPage;
+        
+        // Ajustar la página actual si es necesario
+        const history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+        const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
+        
+        if (currentPage > totalPages) {
+            currentPage = totalPages || 1;
+        }
+        
         updateHistoryDisplay();
+        console.log(`📱 Pantalla redimensionada: ${ITEMS_PER_PAGE} elementos por página`);
     }
 });

@@ -1,9 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* Variables CSS globales para transiciones suaves */
+:root {
+    --theme-transition-duration: 0.6s;
+    --theme-transition-easing: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --fast-transition: 0.2s ease;
+    --medium-transition: 0.3s ease;
+    --slow-transition: 0.5s ease;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    /* Transición global para cambios de tema */
+    transition: 
+        background-color var(--theme-transition-duration) var(--theme-transition-easing),
+        background var(--theme-transition-duration) var(--theme-transition-easing),
+        color var(--theme-transition-duration) var(--theme-transition-easing),
+        border-color var(--theme-transition-duration) var(--theme-transition-easing),
+        box-shadow var(--theme-transition-duration) var(--theme-transition-easing),
+        backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing);
 }
 
 body {
@@ -54,6 +71,12 @@ h1 {
         0 8px 32px rgba(70, 130, 180, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.6),
         inset 0 -1px 0 rgba(135, 206, 250, 0.3);
+    /* Transiciones específicas para efectos glassmórficos */
+    transition: 
+        background var(--theme-transition-duration) var(--theme-transition-easing),
+        backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing),
+        border-color var(--theme-transition-duration) var(--theme-transition-easing),
+        box-shadow var(--theme-transition-duration) var(--theme-transition-easing);
 }
 
 /* Estilos para mostrar tipo de cambio */
@@ -205,6 +228,32 @@ h1 {
     background: #1976D2;
 }
 
+.cancel-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    margin-top: 0.5rem;
+    transition: background var(--fast-transition);
+}
+
+.cancel-btn:hover {
+    background: #d32f2f;
+}
+
+.cancel-btn:active {
+    background: #b71c1c;
+    transform: translateY(1px);
+}
+
 .result {
     text-align: center;
     font-size: 1.5rem;
@@ -238,7 +287,24 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    /* Transiciones mejoradas para cambio de tema */
+    transition: 
+        all var(--medium-transition),
+        background var(--theme-transition-duration) var(--theme-transition-easing),
+        backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing),
+        border-color var(--theme-transition-duration) var(--theme-transition-easing),
+        box-shadow var(--theme-transition-duration) var(--theme-transition-easing),
+        opacity var(--theme-transition-duration) var(--theme-transition-easing),
+        visibility var(--theme-transition-duration) var(--theme-transition-easing),
+        transform var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Ocultar botón del menú hamburguesa cuando está activo */
+.menu-toggle.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
+    pointer-events: none;
 }
 
 /* Botón de modo noche */
@@ -262,7 +328,13 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    /* Transiciones mejoradas para cambio de tema */
+    transition: 
+        all var(--medium-transition),
+        background var(--theme-transition-duration) var(--theme-transition-easing),
+        backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing),
+        border-color var(--theme-transition-duration) var(--theme-transition-easing),
+        box-shadow var(--theme-transition-duration) var(--theme-transition-easing);
 }
 
 .theme-toggle:hover {
@@ -307,17 +379,43 @@ h1 {
 @keyframes themeTransition {
     0% {
         opacity: 1;
+        transform: scale(1);
     }
     50% {
-        opacity: 0.8;
+        opacity: 0.95;
+        transform: scale(1.02);
     }
     100% {
         opacity: 1;
+        transform: scale(1);
     }
 }
 
 .theme-changing {
-    animation: themeTransition 0.4s ease-in-out;
+    animation: themeTransition 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    /* Ocultar barras de scroll durante la transición */
+    overflow: hidden !important;
+}
+
+/* Asegurar que tanto html como body oculten scroll durante transición */
+html.theme-changing,
+html.theme-changing body {
+    overflow: hidden !important;
+    /* Prevenir cualquier scroll durante la transición */
+    scroll-behavior: auto !important;
+}
+
+/* Mejora adicional: transición suave para elementos específicos */
+.theme-changing * {
+    transition-duration: 0.6s !important;
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+/* Transición específica para el fondo del body */
+.theme-changing body {
+    transition: 
+        background 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        background-color 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .hamburger {
@@ -606,6 +704,20 @@ h1 {
         inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* Estilos para modo oscuro del botón de cancelar */
+[data-theme="dark"] .cancel-btn {
+    background: #f44336;
+    color: white;
+}
+
+[data-theme="dark"] .cancel-btn:hover {
+    background: #d32f2f;
+}
+
+[data-theme="dark"] .cancel-btn:active {
+    background: #b71c1c;
+}
+
 #pageInfo {
     font-size: 0.9rem;
     color: #34495e;
@@ -661,6 +773,55 @@ h1 {
     .theme-toggle {
         top: 10px;
         right: 10px;
+    }
+
+    .history-item {
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+
+    .pagination {
+        padding: 15px 10px;
+        gap: 15px;
+    }
+}
+
+/* Tablets y laptops pequeñas */
+@media (min-width: 481px) and (max-width: 1024px) {
+    .sidebar {
+        width: 280px;
+    }
+
+    .history-item {
+        padding: 14px;
+        margin-bottom: 9px;
+    }
+
+    .pagination {
+        padding: 18px 12px;
+        gap: 18px;
+    }
+}
+
+/* Pantallas grandes */
+@media (min-width: 1441px) {
+    .container {
+        max-width: 600px;
+    }
+
+    .sidebar {
+        width: 350px;
+        left: -350px;
+    }
+
+    .history-item {
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+
+    .pagination {
+        padding: 22px 18px;
+        gap: 22px;
     }
 }
 
