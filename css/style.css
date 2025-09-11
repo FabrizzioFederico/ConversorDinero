@@ -42,6 +42,7 @@ body {
     background-attachment: fixed;
     font-weight: 400;
     letter-spacing: -0.01em;
+    padding-bottom: 40px; /* Espacio para el footer */
 }
 
 .container {
@@ -1298,4 +1299,61 @@ h1 {
 
 [data-theme="dark"] .sidebar::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+/* Footer Styles */
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px 20px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(135, 206, 250, 0.2);
+    z-index: 100;
+    transition: 
+        background var(--theme-transition-duration) var(--theme-transition-easing),
+        border-color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+.footer a {
+    color: #7f8c8d;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 400;
+    transition: color var(--fast-transition);
+}
+
+.footer a:hover {
+    color: #2c3e50;
+    text-decoration: underline;
+}
+
+/* Footer en modo oscuro */
+[data-theme="dark"] .footer {
+    background: rgba(30, 30, 30, 0.15);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .footer a {
+    color: #bdc3c7;
+}
+
+[data-theme="dark"] .footer a:hover {
+    color: #ecf0f1;
+}
+
+/* Responsive footer */
+@media (max-width: 768px) {
+    .footer {
+        padding: 6px 15px;
+    }
+    
+    .footer a {
+        font-size: 0.75rem;
+    }
 }
