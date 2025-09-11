@@ -12,10 +12,16 @@ const overlay = document.getElementById('overlay');
 const closeMenu = document.getElementById('closeMenu');
 const historyList = document.getElementById('historyList');
 const themeToggle = document.getElementById('themeToggle');
+let ITEMS_PER_PAGE = window.innerWidth <= 768 ? 6 : 4;
+let currentPage = 1;
+const prevPageBtn = document.getElementById('prevPage');
+const nextPageBtn = document.getElementById('nextPage');
+const pageInfo = document.getElementById('pageInfo');
 
 // Estado de la aplicación
 let isLoading = false;
 let isDarkMode = false;
+let currentEditId = null;
 
 /**
  * Función para cargar las monedas en los selectores
@@ -495,15 +501,25 @@ function saveToHistory(amount, fromCurrency, toCurrency, result) {
 // Función para actualizar el historial en el DOM
 function updateHistoryDisplay() {
     const history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+    const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
+    
+    if (currentPage > totalPages) {
+        currentPage = totalPages || 1;
+    }
+    
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const currentItems = history.slice(startIndex, endIndex);
+    
     historyList.innerHTML = '';
-
-    history.forEach(conversion => {
+    
+    currentItems.forEach(conversion => {
         const item = document.createElement('div');
         item.className = 'history-item';
         item.innerHTML = `
             <div class="conversion-details">
-                ${conversion.amount.toFixed(2)} ${conversion.fromCurrency} = 
-                ${conversion.result.toFixed(2)} ${conversion.toCurrency}
+                ${Number(conversion.amount).toFixed(2)} ${conversion.fromCurrency} = 
+                ${Number(conversion.result).toFixed(2)} ${conversion.toCurrency}
                 <br>
                 <small>${new Date(conversion.timestamp).toLocaleString()}</small>
             </div>
@@ -514,10 +530,55 @@ function updateHistoryDisplay() {
         `;
         historyList.appendChild(item);
     });
+    
+    pageInfo.textContent = `Página ${currentPage} de ${totalPages || 1}`;
+    prevPageBtn.disabled = currentPage === 1;
+    nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
 }
 
-// Variable global para trackear si estamos editando
-let currentEditId = null;
+// Funciones para cambiar de página
+function goToNextPage() {
+    const history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+    const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
+    
+    if (currentPage < totalPages) {
+        currentPage++;
+        updateHistoryDisplay();
+    }
+}
+
+function goToPrevPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        updateHistoryDisplay();
+    }
+}
+
+// Agregar al final del DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    // ...código existente...
+    
+    // Event listeners para la paginación
+    prevPageBtn.addEventListener('click', goToPrevPage);
+    nextPageBtn.addEventListener('click', goToNextPage);
+    
+    updateHistoryDisplay();
+});
+
+// Modificar la función deleteConversion
+function deleteConversion(id) {
+    let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+    history = history.filter(item => item.id !== id);
+    localStorage.setItem('conversionHistory', JSON.stringify(history));
+    
+    // Verificar si la página actual quedó vacía
+    const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
+    if (currentPage > totalPages) {
+        currentPage = totalPages || 1;
+    }
+    
+    updateHistoryDisplay();
+}
 
 // Modificar la función editConversion
 function editConversion(id) {
@@ -525,58 +586,57 @@ function editConversion(id) {
     const conversion = history.find(item => item.id === id);
     
     if (conversion) {
-        currentEditId = id; // Guardar el ID que estamos editando
+        currentEditId = id;
         amountInput.value = conversion.amount;
         fromCurrencySelect.value = conversion.fromCurrency;
-        toCurrencySelect.value = conversion.toCurrency;
-        closeMenuHandler();
+        toCurrency.value = conversion.toCurrency;
         
-        // Cambiar el texto del botón de convertir
+        // Cambiar el texto y estilo del botón
         convertButton.textContent = 'Actualizar';
         convertButton.classList.add('editing');
+        
+        // Cerrar el menú
+        closeMenuHandler();
+        
+        // Enfocar el campo de cantidad
+        amountInput.focus();
     }
 }
 
-// Modificar la función performConversion
+// Asegurar que performConversion maneje correctamente la edición
 async function performConversion() {
     if (isLoading) return;
 
     const amount = parseFloat(amountInput.value);
     const fromCurrency = fromCurrencySelect.value;
     const toCurrency = toCurrencySelect.value;
-    
-    // Validar entrada
+
     if (!amount || amount <= 0) {
         showError('Por favor ingrese una cantidad válida');
         return;
     }
-    
-    if (!fromCurrency || !toCurrency) {
-        showError('Por favor seleccione las monedas');
-        return;
-    }
-    
+
     showLoading();
-    
+
     try {
         const rates = await window.CurrencyAPI.fetchExchangeRates('USD');
         const convertedAmount = window.CurrencyAPI.convertCurrency(
-            amount, 
-            fromCurrency, 
-            toCurrency, 
+            amount,
+            fromCurrency,
+            toCurrency,
             rates
         );
-        
+
         displayResult(amount, fromCurrency, toCurrency, convertedAmount);
-        
-        // Si estamos editando, actualizar la conversión existente
+
         if (currentEditId) {
+            // Actualizar conversión existente
             let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
             const index = history.findIndex(item => item.id === currentEditId);
-            
+
             if (index !== -1) {
                 history[index] = {
-                    ...history[index],
+                    id: currentEditId,
                     amount,
                     fromCurrency,
                     toCurrency,
@@ -584,36 +644,36 @@ async function performConversion() {
                     timestamp: new Date().toISOString()
                 };
                 localStorage.setItem('conversionHistory', JSON.stringify(history));
-                
-                // Resetear el estado de edición
+
+                // Resetear estado de edición
                 currentEditId = null;
                 convertButton.textContent = 'Convertir';
                 convertButton.classList.remove('editing');
             }
         } else {
-            // Si no estamos editando, crear nueva conversión
-            saveToHistory(amount, fromCurrency, toCurrency, convertedAmount);
+            // Crear nueva conversión
+            const newConversion = {
+                id: Date.now(),
+                amount,
+                fromCurrency,
+                toCurrency,
+                result: convertedAmount,
+                timestamp: new Date().toISOString()
+            };
+
+            let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+            history.unshift(newConversion);
+            localStorage.setItem('conversionHistory', JSON.stringify(history));
         }
-        
+
         updateHistoryDisplay();
-        
+
     } catch (error) {
         console.error('Error en la conversión:', error);
         showError(`Error: ${error.message}`);
     } finally {
         hideLoading();
     }
-}
-
-/**
- * Función para eliminar una conversión
- * @param {number} id - ID de la conversión a eliminar
- */
-function deleteConversion(id) {
-    let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
-    history = history.filter(item => item.id !== id);
-    localStorage.setItem('conversionHistory', JSON.stringify(history));
-    updateHistoryDisplay();
 }
 
 // Event Listeners y inicialización
@@ -696,3 +756,12 @@ overlay.addEventListener('click', closeMenuHandler);
 
 // Event listener para el modo noche
 themeToggle.addEventListener('click', toggleTheme);
+
+// Agregar listener para cambios en el tamaño de ventana
+window.addEventListener('resize', () => {
+    const newItemsPerPage = window.innerWidth <= 768 ? 6 : 4;
+    if (newItemsPerPage !== ITEMS_PER_PAGE) {
+        ITEMS_PER_PAGE = newItemsPerPage;
+        updateHistoryDisplay();
+    }
+});
