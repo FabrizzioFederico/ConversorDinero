@@ -12,6 +12,7 @@ const overlay = document.getElementById('overlay');
 const closeMenu = document.getElementById('closeMenu');
 const historyList = document.getElementById('historyList');
 const themeToggle = document.getElementById('themeToggle');
+const exchangeRateValue = document.getElementById('exchangeRateValue');
 let ITEMS_PER_PAGE = window.innerWidth <= 768 ? 4 : 6;
 let currentPage = 1;
 const prevPageBtn = document.getElementById('prevPage');
@@ -117,6 +118,52 @@ function createFlagDisplays() {
 }
 
 /**
+ * Función para actualizar la visualización del tipo de cambio
+ */
+async function updateExchangeRateDisplay() {
+    const fromCurrency = fromCurrencySelect.value;
+    const toCurrency = toCurrencySelect.value;
+    
+    if (!fromCurrency || !toCurrency) {
+        exchangeRateValue.textContent = '1 USD = 1.00 EUR';
+        return;
+    }
+    
+    try {
+        // Obtener tasas actuales
+        const rates = await window.CurrencyAPI.fetchExchangeRates('USD');
+        
+        // Calcular el tipo de cambio entre las monedas seleccionadas
+        const exchangeRate = window.CurrencyAPI.convertCurrency(1, fromCurrency, toCurrency, rates);
+        
+        // Obtener símbolos de moneda si están disponibles
+        const fromInfo = window.CurrencyAPI.getCurrencyInfo(fromCurrency);
+        const toInfo = window.CurrencyAPI.getCurrencyInfo(toCurrency);
+        
+        // Formatear el tipo de cambio con el número apropiado de decimales
+        let formattedRate;
+        if (exchangeRate >= 1) {
+            formattedRate = exchangeRate.toLocaleString('es-ES', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 4
+            });
+        } else {
+            formattedRate = exchangeRate.toLocaleString('es-ES', {
+                minimumFractionDigits: 4,
+                maximumFractionDigits: 6
+            });
+        }
+        
+        // Actualizar el texto del tipo de cambio
+        exchangeRateValue.textContent = `1 ${fromCurrency} = ${formattedRate} ${toCurrency}`;
+        
+    } catch (error) {
+        console.error('Error al actualizar tipo de cambio:', error);
+        exchangeRateValue.textContent = `1 ${fromCurrency} = -- ${toCurrency}`;
+    }
+}
+
+/**
  * Función para actualizar la bandera de la moneda de origen
  */
 function updateFromFlag() {
@@ -129,6 +176,9 @@ function updateFromFlag() {
         flagElement.alt = currencyInfo.name;
         flagElement.title = `${fromCurrencySelect.value} - ${currencyInfo.name}`;
     }
+    
+    // Actualizar tipo de cambio cuando cambia la moneda de origen
+    updateExchangeRateDisplay();
 }
 
 /**
@@ -144,6 +194,9 @@ function updateToFlag() {
         flagElement.alt = currencyInfo.name;
         flagElement.title = `${toCurrencySelect.value} - ${currencyInfo.name}`;
     }
+    
+    // Actualizar tipo de cambio cuando cambia la moneda de destino
+    updateExchangeRateDisplay();
 }
 
 /**
@@ -282,6 +335,9 @@ function swapCurrencies() {
     // Actualizar banderas después del intercambio
     updateFromFlag();
     updateToFlag();
+    
+    // Actualizar tipo de cambio después del intercambio
+    updateExchangeRateDisplay();
     
     // Agregar animación al botón de intercambio
     swapButton.classList.add('swap-animation');
@@ -691,6 +747,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Obtener tasas iniciales
         await window.CurrencyAPI.fetchExchangeRates();
         console.log('✅ Tasas de cambio iniciales obtenidas');
+        
+        // Actualizar tipo de cambio inicial
+        await updateExchangeRateDisplay();
+        console.log('✅ Tipo de cambio inicial mostrado');
         
         // Iniciar actualización automática
         window.CurrencyAPI.startAutoUpdate(10);
