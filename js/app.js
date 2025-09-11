@@ -12,7 +12,7 @@ const overlay = document.getElementById('overlay');
 const closeMenu = document.getElementById('closeMenu');
 const historyList = document.getElementById('historyList');
 const themeToggle = document.getElementById('themeToggle');
-let ITEMS_PER_PAGE = window.innerWidth <= 768 ? 6 : 4;
+let ITEMS_PER_PAGE = window.innerWidth <= 768 ? 4 : 6;
 let currentPage = 1;
 const prevPageBtn = document.getElementById('prevPage');
 const nextPageBtn = document.getElementById('nextPage');
