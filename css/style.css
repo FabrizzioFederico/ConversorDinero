@@ -118,6 +118,56 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
+}
+
+/* Botón de modo noche */
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.theme-icon {
+    font-size: 18px;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle.rotating .theme-icon {
+    transform: rotate(360deg) scale(1.2);
+}
+
+/* Animación de fundido para cambio de tema */
+@keyframes themeTransition {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.theme-changing {
+    animation: themeTransition 0.4s ease-in-out;
 }
 
 .hamburger {
@@ -277,6 +327,11 @@ h1 {
         top: 10px;
         left: 10px;
     }
+
+    .theme-toggle {
+        top: 10px;
+        right: 10px;
+    }
 }
 
 /* Animaciones */
@@ -383,4 +438,247 @@ h1 {
 
 .result {
     transition: all 0.3s ease;
+}
+
+/* === MODO OSCURO === */
+/* Variables CSS para facilitar el cambio de tema */
+:root {
+    --bg-color: #f5f5f5;
+    --container-bg: white;
+    --text-color: #333;
+    --border-color: #ddd;
+    --input-bg: white;
+    --button-bg: #4CAF50;
+    --button-hover: #45a049;
+    --result-bg: #f8f8f8;
+    --sidebar-bg: white;
+    --shadow: rgba(0,0,0,0.1);
+    --shadow-hover: rgba(0,0,0,0.15);
+    
+    /* Optimización para transiciones */
+    --transition-duration: 0.4s;
+    --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --container-bg: #2d2d2d;
+    --text-color: #ffffff;
+    --border-color: #404040;
+    --input-bg: #404040;
+    --button-bg: #4CAF50;
+    --button-hover: #45a049;
+    --result-bg: #404040;
+    --sidebar-bg: #2d2d2d;
+    --shadow: rgba(0,0,0,0.3);
+    --shadow-hover: rgba(0,0,0,0.4);
+}
+
+/* Aplicar variables CSS */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+}
+
+.converter-box {
+    background: var(--container-bg);
+    box-shadow: 0 2px 10px var(--shadow);
+}
+
+.converter-box:hover {
+    box-shadow: 0 4px 15px var(--shadow-hover);
+}
+
+.input-amount,
+.currency-select {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+.result {
+    background: var(--result-bg);
+    color: var(--text-color);
+}
+
+h1 {
+    color: var(--text-color);
+}
+
+/* Sidebar en modo oscuro */
+.sidebar {
+    background: var(--sidebar-bg);
+    color: var(--text-color);
+}
+
+.sidebar-header {
+    border-bottom-color: var(--border-color);
+}
+
+.close-btn {
+    color: var(--text-color);
+}
+
+.history-item {
+    background: var(--result-bg);
+    color: var(--text-color);
+}
+
+/* Botones en modo oscuro */
+.menu-toggle,
+.theme-toggle {
+    background: var(--container-bg);
+    color: var(--text-color);
+    box-shadow: 0 2px 5px var(--shadow);
+}
+
+.menu-toggle:hover,
+.theme-toggle:hover {
+    box-shadow: 0 4px 10px var(--shadow-hover);
+}
+
+.swap-btn {
+    background: var(--result-bg);
+    color: var(--text-color);
+}
+
+.swap-btn:hover {
+    background: var(--border-color);
+}
+
+/* Hamburger en modo oscuro */
+.hamburger,
+.hamburger::before,
+.hamburger::after {
+    background: var(--text-color);
+}
+
+/* Placeholder en modo oscuro */
+.input-amount::placeholder {
+    color: var(--text-color);
+    opacity: 0.6;
+}
+
+/* Focus states en modo oscuro */
+.input-amount:focus,
+.currency-select:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+/* Forzar color del texto del resultado en modo oscuro */
+[data-theme="dark"] #convertedAmount {
+    color: #ffffff !important;
+}
+
+/* Clases para estados de texto */
+.error-text {
+    color: #e74c3c !important;
+}
+
+[data-theme="dark"] .error-text {
+    color: #ff6b6b !important;
+}
+
+/* Overlay en modo oscuro */
+[data-theme="dark"] .overlay {
+    background: rgba(0,0,0,0.7);
+}
+
+/* Animación suave para el cambio de tema */
+html {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                color 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Transiciones específicas para elementos principales */
+.converter-box {
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                box-shadow var(--transition-duration) var(--transition-easing),
+                transform 0.3s ease;
+}
+
+.input-amount,
+.currency-select {
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                color var(--transition-duration) var(--transition-easing),
+                border-color var(--transition-duration) var(--transition-easing),
+                box-shadow 0.3s ease;
+}
+
+.result {
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                color var(--transition-duration) var(--transition-easing),
+                transform 0.3s ease;
+}
+
+.sidebar {
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                color var(--transition-duration) var(--transition-easing),
+                left 0.3s ease-in-out;
+}
+
+.menu-toggle,
+.theme-toggle {
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                color var(--transition-duration) var(--transition-easing),
+                box-shadow var(--transition-duration) var(--transition-easing),
+                transform 0.3s ease;
+}
+
+.swap-btn {
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                color var(--transition-duration) var(--transition-easing),
+                transform 0.3s ease;
+}
+
+.hamburger,
+.hamburger::before,
+.hamburger::after {
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                transform 0.3s ease-in-out;
+}
+
+h1 {
+    transition: color var(--transition-duration) var(--transition-easing);
+}
+
+#convertedAmount {
+    transition: color var(--transition-duration) var(--transition-easing);
+}
+
+/* Estilos específicos para elementos select en modo oscuro */
+[data-theme="dark"] .currency-select option {
+    background: var(--input-bg);
+    color: var(--text-color);
+}
+
+/* Scrollbar personalizada para modo oscuro */
+[data-theme="dark"] .sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+[data-theme="dark"] .sidebar::-webkit-scrollbar-track {
+    background: var(--container-bg);
+}
+
+[data-theme="dark"] .sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+[data-theme="dark"] .sidebar::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }

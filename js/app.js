@@ -11,9 +11,11 @@ const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
 const closeMenu = document.getElementById('closeMenu');
 const historyList = document.getElementById('historyList');
+const themeToggle = document.getElementById('themeToggle');
 
 // Estado de la aplicación
 let isLoading = false;
+let isDarkMode = false;
 
 /**
  * Función para cargar las monedas en los selectores
@@ -62,7 +64,11 @@ function displayResult(amount, fromCurrency, toCurrency, convertedAmount) {
     });
     
     convertedAmountSpan.textContent = `${originalFormatted} ${fromCurrency} = ${formattedAmount} ${toCurrency}`;
-    convertedAmountSpan.style.color = '#333';
+    
+    // Remover clases de estado anterior
+    convertedAmountSpan.classList.remove('error-text');
+    convertedAmountSpan.style.color = ''; // Limpiar estilos inline
+    
     resultDiv.style.display = 'block';
     
     // Agregar animación de resultado
@@ -78,7 +84,8 @@ function displayResult(amount, fromCurrency, toCurrency, convertedAmount) {
  */
 function showError(message) {
     convertedAmountSpan.textContent = message;
-    convertedAmountSpan.style.color = '#e74c3c';
+    convertedAmountSpan.classList.add('error-text');
+    convertedAmountSpan.style.color = ''; // Limpiar estilos inline
     resultDiv.style.display = 'block';
     
     // Agregar animación de error
@@ -93,7 +100,8 @@ function showError(message) {
  */
 function showLoading() {
     convertedAmountSpan.textContent = 'Convirtiendo...';
-    convertedAmountSpan.style.color = '#666';
+    convertedAmountSpan.classList.remove('error-text');
+    convertedAmountSpan.style.color = ''; // Limpiar estilos inline
     resultDiv.style.display = 'block';
     convertButton.disabled = true;
     isLoading = true;
@@ -311,6 +319,63 @@ function closeMenuHandler() {
     overlay.classList.remove('active');
 }
 
+// Funciones para el modo noche
+function toggleTheme() {
+    // Agregar clase de animación global
+    document.body.classList.add('theme-changing');
+    
+    // Agregar animación al botón
+    themeToggle.classList.add('rotating');
+    
+    // Pequeño delay para efecto más suave
+    setTimeout(() => {
+        isDarkMode = !isDarkMode;
+        
+        // Aplicar el tema
+        if (isDarkMode) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeToggle.querySelector('.theme-icon').textContent = '☀️';
+            localStorage.setItem('darkMode', 'true');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            themeToggle.querySelector('.theme-icon').textContent = '🌙';
+            localStorage.setItem('darkMode', 'false');
+        }
+        
+        console.log(`🎨 Tema cambiado a: ${isDarkMode ? 'Oscuro' : 'Claro'}`);
+    }, 100);
+    
+    // Remover animaciones
+    setTimeout(() => {
+        themeToggle.classList.remove('rotating');
+        document.body.classList.remove('theme-changing');
+    }, 500);
+}
+
+function loadTheme() {
+    const savedTheme = localStorage.getItem('darkMode');
+    
+    // Aplicar tema sin transición al cargar para evitar flash
+    document.documentElement.style.setProperty('--transition-duration', '0s');
+    
+    if (savedTheme === 'true') {
+        isDarkMode = true;
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggle.querySelector('.theme-icon').textContent = '☀️';
+    } else {
+        isDarkMode = false;
+        document.documentElement.removeAttribute('data-theme');
+        themeToggle.querySelector('.theme-icon').textContent = '🌙';
+    }
+    
+    // Restaurar transiciones después del primer frame
+    requestAnimationFrame(() => {
+        document.documentElement.style.removeProperty('--transition-duration');
+    });
+    
+    console.log(`🎨 Tema cargado: ${isDarkMode ? 'Oscuro' : 'Claro'}`);
+}
+
 // Función para guardar en el historial
 function saveToHistory(amount, fromCurrency, toCurrency, result) {
     const conversion = {
@@ -456,6 +521,9 @@ function deleteConversion(id) {
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Iniciando Conversor de Moneda...');
     
+    // Cargar tema guardado
+    loadTheme();
+    
     try {
         // Cargar monedas en los selectores
         loadCurrencies();
@@ -526,3 +594,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 menuToggle.addEventListener('click', toggleMenu);
 closeMenu.addEventListener('click', closeMenuHandler);
 overlay.addEventListener('click', closeMenuHandler);
+
+// Event listener para el modo noche
+themeToggle.addEventListener('click', toggleTheme);
