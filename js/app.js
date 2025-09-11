@@ -6,6 +6,11 @@ const convertButton = document.getElementById('convertButton');
 const swapButton = document.getElementById('swapButton');
 const resultDiv = document.getElementById('result');
 const convertedAmountSpan = document.getElementById('convertedAmount');
+const menuToggle = document.getElementById('menuToggle');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+const closeMenu = document.getElementById('closeMenu');
+const historyList = document.getElementById('historyList');
 
 // Estado de la aplicación
 let isLoading = false;
@@ -142,8 +147,8 @@ async function performConversion() {
         // Mostrar resultado
         displayResult(amount, fromCurrency, toCurrency, convertedAmount);
         
-        // Guardar última conversión en localStorage
-        saveLastConversion(amount, fromCurrency, toCurrency, convertedAmount);
+        // Agregar al historial
+        saveToHistory(amount, fromCurrency, toCurrency, convertedAmount);
         
     } catch (error) {
         console.error('Error en la conversión:', error);
@@ -293,6 +298,160 @@ function handleKeyboardShortcuts(event) {
     }
 }
 
+// Funciones para el menú
+function toggleMenu() {
+    menuToggle.classList.toggle('active');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+
+function closeMenuHandler() {
+    menuToggle.classList.remove('active');
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+}
+
+// Función para guardar en el historial
+function saveToHistory(amount, fromCurrency, toCurrency, result) {
+    const conversion = {
+        id: Date.now(),
+        amount,
+        fromCurrency,
+        toCurrency,
+        result,
+        timestamp: new Date().toISOString()
+    };
+
+    let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+    history.unshift(conversion);
+    localStorage.setItem('conversionHistory', JSON.stringify(history));
+    updateHistoryDisplay();
+}
+
+// Función para actualizar el historial en el DOM
+function updateHistoryDisplay() {
+    const history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+    historyList.innerHTML = '';
+
+    history.forEach(conversion => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.innerHTML = `
+            <div class="conversion-details">
+                ${conversion.amount} ${conversion.fromCurrency} = 
+                ${conversion.result} ${conversion.toCurrency}
+                <br>
+                <small>${new Date(conversion.timestamp).toLocaleString()}</small>
+            </div>
+            <div class="actions">
+                <button class="edit-btn" onclick="editConversion(${conversion.id})">Editar</button>
+                <button class="delete-btn" onclick="deleteConversion(${conversion.id})">Eliminar</button>
+            </div>
+        `;
+        historyList.appendChild(item);
+    });
+}
+
+// Variable global para trackear si estamos editando
+let currentEditId = null;
+
+// Modificar la función editConversion
+function editConversion(id) {
+    const history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+    const conversion = history.find(item => item.id === id);
+    
+    if (conversion) {
+        currentEditId = id; // Guardar el ID que estamos editando
+        amountInput.value = conversion.amount;
+        fromCurrencySelect.value = conversion.fromCurrency;
+        toCurrencySelect.value = conversion.toCurrency;
+        closeMenuHandler();
+        
+        // Cambiar el texto del botón de convertir
+        convertButton.textContent = 'Actualizar';
+        convertButton.classList.add('editing');
+    }
+}
+
+// Modificar la función performConversion
+async function performConversion() {
+    if (isLoading) return;
+
+    const amount = parseFloat(amountInput.value);
+    const fromCurrency = fromCurrencySelect.value;
+    const toCurrency = toCurrencySelect.value;
+    
+    // Validar entrada
+    if (!amount || amount <= 0) {
+        showError('Por favor ingrese una cantidad válida');
+        return;
+    }
+    
+    if (!fromCurrency || !toCurrency) {
+        showError('Por favor seleccione las monedas');
+        return;
+    }
+    
+    showLoading();
+    
+    try {
+        const rates = await window.CurrencyAPI.fetchExchangeRates('USD');
+        const convertedAmount = window.CurrencyAPI.convertCurrency(
+            amount, 
+            fromCurrency, 
+            toCurrency, 
+            rates
+        );
+        
+        displayResult(amount, fromCurrency, toCurrency, convertedAmount);
+        
+        // Si estamos editando, actualizar la conversión existente
+        if (currentEditId) {
+            let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+            const index = history.findIndex(item => item.id === currentEditId);
+            
+            if (index !== -1) {
+                history[index] = {
+                    ...history[index],
+                    amount,
+                    fromCurrency,
+                    toCurrency,
+                    result: convertedAmount,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('conversionHistory', JSON.stringify(history));
+                
+                // Resetear el estado de edición
+                currentEditId = null;
+                convertButton.textContent = 'Convertir';
+                convertButton.classList.remove('editing');
+            }
+        } else {
+            // Si no estamos editando, crear nueva conversión
+            saveToHistory(amount, fromCurrency, toCurrency, convertedAmount);
+        }
+        
+        updateHistoryDisplay();
+        
+    } catch (error) {
+        console.error('Error en la conversión:', error);
+        showError(`Error: ${error.message}`);
+    } finally {
+        hideLoading();
+    }
+}
+
+/**
+ * Función para eliminar una conversión
+ * @param {number} id - ID de la conversión a eliminar
+ */
+function deleteConversion(id) {
+    let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+    history = history.filter(item => item.id !== id);
+    localStorage.setItem('conversionHistory', JSON.stringify(history));
+    updateHistoryDisplay();
+}
+
 // Event Listeners y inicialización
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Iniciando Conversor de Moneda...');
@@ -358,5 +517,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Event listener para foco automático
     amountInput.focus();
     
+    updateHistoryDisplay(); // Cargar el historial inicial
+    
     console.log('✅ Conversor de Moneda iniciado correctamente');
 });
+
+// Event listeners para el menú
+menuToggle.addEventListener('click', toggleMenu);
+closeMenu.addEventListener('click', closeMenuHandler);
+overlay.addEventListener('click', closeMenuHandler);

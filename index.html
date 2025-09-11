@@ -7,6 +7,23 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Agregar antes del div.container -->
+    <div class="menu-toggle" id="menuToggle">
+        <span class="hamburger"></span>
+    </div>
+    
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Historial</h2>
+            <button class="close-btn" id="closeMenu">&times;</button>
+        </div>
+        <div class="history-list" id="historyList">
+            <!-- El historial se llenará dinámicamente -->
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
     <div class="container">
         <h1>Conversor de Moneda</h1>
         <div class="converter-box" id="converterBox">
