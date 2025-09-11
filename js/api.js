@@ -7,137 +7,137 @@ let exchangeRates = {};
 // Monedas disponibles
 const currencies = [
     // Monedas principales
-    { code: 'USD', name: 'Dólar Estadounidense' },
-    { code: 'EUR', name: 'Euro' },
-    { code: 'GBP', name: 'Libra Esterlina' },
-    { code: 'JPY', name: 'Yen Japonés' },
-    { code: 'CHF', name: 'Franco Suizo' },
-    { code: 'CAD', name: 'Dólar Canadiense' },
-    { code: 'AUD', name: 'Dólar Australiano' },
-    { code: 'NZD', name: 'Dólar Neozelandés' },
+    { code: 'USD', name: 'Dólar Estadounidense', country: 'us' },
+    { code: 'EUR', name: 'Euro', country: 'eu' },
+    { code: 'GBP', name: 'Libra Esterlina', country: 'gb' },
+    { code: 'JPY', name: 'Yen Japonés', country: 'jp' },
+    { code: 'CHF', name: 'Franco Suizo', country: 'ch' },
+    { code: 'CAD', name: 'Dólar Canadiense', country: 'ca' },
+    { code: 'AUD', name: 'Dólar Australiano', country: 'au' },
+    { code: 'NZD', name: 'Dólar Neozelandés', country: 'nz' },
     
     // Monedas asiáticas
-    { code: 'CNY', name: 'Yuan Chino' },
-    { code: 'KRW', name: 'Won Surcoreano' },
-    { code: 'SGD', name: 'Dólar de Singapur' },
-    { code: 'HKD', name: 'Dólar de Hong Kong' },
-    { code: 'THB', name: 'Baht Tailandés' },
-    { code: 'INR', name: 'Rupia India' },
-    { code: 'IDR', name: 'Rupia Indonesia' },
-    { code: 'MYR', name: 'Ringgit Malayo' },
-    { code: 'PHP', name: 'Peso Filipino' },
-    { code: 'VND', name: 'Dong Vietnamita' },
-    { code: 'PKR', name: 'Rupia Pakistaní' },
-    { code: 'LKR', name: 'Rupia de Sri Lanka' },
-    { code: 'BDT', name: 'Taka de Bangladesh' },
+    { code: 'CNY', name: 'Yuan Chino', country: 'cn' },
+    { code: 'KRW', name: 'Won Surcoreano', country: 'kr' },
+    { code: 'SGD', name: 'Dólar de Singapur', country: 'sg' },
+    { code: 'HKD', name: 'Dólar de Hong Kong', country: 'hk' },
+    { code: 'THB', name: 'Baht Tailandés', country: 'th' },
+    { code: 'INR', name: 'Rupia India', country: 'in' },
+    { code: 'IDR', name: 'Rupia Indonesia', country: 'id' },
+    { code: 'MYR', name: 'Ringgit Malayo', country: 'my' },
+    { code: 'PHP', name: 'Peso Filipino', country: 'ph' },
+    { code: 'VND', name: 'Dong Vietnamita', country: 'vn' },
+    { code: 'PKR', name: 'Rupia Pakistaní', country: 'pk' },
+    { code: 'LKR', name: 'Rupia de Sri Lanka', country: 'lk' },
+    { code: 'BDT', name: 'Taka de Bangladesh', country: 'bd' },
     
     // Monedas latinoamericanas
-    { code: 'ARS', name: 'Peso Argentino' },
-    { code: 'BRL', name: 'Real Brasileño' },
-    { code: 'MXN', name: 'Peso Mexicano' },
-    { code: 'CLP', name: 'Peso Chileno' },
-    { code: 'COP', name: 'Peso Colombiano' },
-    { code: 'PEN', name: 'Sol Peruano' },
-    { code: 'UYU', name: 'Peso Uruguayo' },
-    { code: 'BOB', name: 'Boliviano' },
-    { code: 'PYG', name: 'Guaraní Paraguayo' },
-    { code: 'VES', name: 'Bolívar Venezolano' },
-    { code: 'GTQ', name: 'Quetzal Guatemalteco' },
-    { code: 'CRC', name: 'Colón Costarricense' },
-    { code: 'PAB', name: 'Balboa Panameño' },
-    { code: 'HNL', name: 'Lempira Hondureño' },
-    { code: 'NIO', name: 'Córdoba Nicaragüense' },
-    { code: 'SVC', name: 'Colón Salvadoreño' },
-    { code: 'DOP', name: 'Peso Dominicano' },
-    { code: 'JMD', name: 'Dólar Jamaiquino' },
-    { code: 'TTD', name: 'Dólar de Trinidad y Tobago' },
+    { code: 'ARS', name: 'Peso Argentino', country: 'ar' },
+    { code: 'BRL', name: 'Real Brasileño', country: 'br' },
+    { code: 'MXN', name: 'Peso Mexicano', country: 'mx' },
+    { code: 'CLP', name: 'Peso Chileno', country: 'cl' },
+    { code: 'COP', name: 'Peso Colombiano', country: 'co' },
+    { code: 'PEN', name: 'Sol Peruano', country: 'pe' },
+    { code: 'UYU', name: 'Peso Uruguayo', country: 'uy' },
+    { code: 'BOB', name: 'Boliviano', country: 'bo' },
+    { code: 'PYG', name: 'Guaraní Paraguayo', country: 'py' },
+    { code: 'VES', name: 'Bolívar Venezolano', country: 've' },
+    { code: 'GTQ', name: 'Quetzal Guatemalteco', country: 'gt' },
+    { code: 'CRC', name: 'Colón Costarricense', country: 'cr' },
+    { code: 'PAB', name: 'Balboa Panameño', country: 'pa' },
+    { code: 'HNL', name: 'Lempira Hondureño', country: 'hn' },
+    { code: 'NIO', name: 'Córdoba Nicaragüense', country: 'ni' },
+    { code: 'SVC', name: 'Colón Salvadoreño', country: 'sv' },
+    { code: 'DOP', name: 'Peso Dominicano', country: 'do' },
+    { code: 'JMD', name: 'Dólar Jamaiquino', country: 'jm' },
+    { code: 'TTD', name: 'Dólar de Trinidad y Tobago', country: 'tt' },
     
     // Monedas europeas (no euro)
-    { code: 'NOK', name: 'Corona Noruega' },
-    { code: 'SEK', name: 'Corona Sueca' },
-    { code: 'DKK', name: 'Corona Danesa' },
-    { code: 'ISK', name: 'Corona Islandesa' },
-    { code: 'PLN', name: 'Zloty Polaco' },
-    { code: 'CZK', name: 'Corona Checa' },
-    { code: 'HUF', name: 'Forint Húngaro' },
-    { code: 'RON', name: 'Leu Rumano' },
-    { code: 'BGN', name: 'Lev Búlgaro' },
-    { code: 'HRK', name: 'Kuna Croata' },
-    { code: 'RSD', name: 'Dinar Serbio' },
-    { code: 'BAM', name: 'Marco Bosnio' },
-    { code: 'MKD', name: 'Denar Macedonio' },
-    { code: 'ALL', name: 'Lek Albanés' },
-    { code: 'MDL', name: 'Leu Moldavo' },
-    { code: 'UAH', name: 'Grivna Ucraniana' },
-    { code: 'BYN', name: 'Rublo Bielorruso' },
-    { code: 'RUB', name: 'Rublo Ruso' },
-    { code: 'TRY', name: 'Lira Turca' },
+    { code: 'NOK', name: 'Corona Noruega', country: 'no' },
+    { code: 'SEK', name: 'Corona Sueca', country: 'se' },
+    { code: 'DKK', name: 'Corona Danesa', country: 'dk' },
+    { code: 'ISK', name: 'Corona Islandesa', country: 'is' },
+    { code: 'PLN', name: 'Zloty Polaco', country: 'pl' },
+    { code: 'CZK', name: 'Corona Checa', country: 'cz' },
+    { code: 'HUF', name: 'Forint Húngaro', country: 'hu' },
+    { code: 'RON', name: 'Leu Rumano', country: 'ro' },
+    { code: 'BGN', name: 'Lev Búlgaro', country: 'bg' },
+    { code: 'HRK', name: 'Kuna Croata', country: 'hr' },
+    { code: 'RSD', name: 'Dinar Serbio', country: 'rs' },
+    { code: 'BAM', name: 'Marco Bosnio', country: 'ba' },
+    { code: 'MKD', name: 'Denar Macedonio', country: 'mk' },
+    { code: 'ALL', name: 'Lek Albanés', country: 'al' },
+    { code: 'MDL', name: 'Leu Moldavo', country: 'md' },
+    { code: 'UAH', name: 'Grivna Ucraniana', country: 'ua' },
+    { code: 'BYN', name: 'Rublo Bielorruso', country: 'by' },
+    { code: 'RUB', name: 'Rublo Ruso', country: 'ru' },
+    { code: 'TRY', name: 'Lira Turca', country: 'tr' },
     
     // Monedas africanas
-    { code: 'ZAR', name: 'Rand Sudafricano' },
-    { code: 'NGN', name: 'Naira Nigeriana' },
-    { code: 'EGP', name: 'Libra Egipcia' },
-    { code: 'KES', name: 'Chelín Keniano' },
-    { code: 'UGX', name: 'Chelín Ugandés' },
-    { code: 'TZS', name: 'Chelín Tanzano' },
-    { code: 'ETB', name: 'Birr Etíope' },
-    { code: 'GHS', name: 'Cedi Ghanés' },
-    { code: 'XOF', name: 'Franco CFA Occidental' },
-    { code: 'XAF', name: 'Franco CFA Central' },
-    { code: 'MAD', name: 'Dirham Marroquí' },
-    { code: 'TND', name: 'Dinar Tunecino' },
-    { code: 'DZD', name: 'Dinar Argelino' },
-    { code: 'LYD', name: 'Dinar Libio' },
-    { code: 'SDG', name: 'Libra Sudanesa' },
-    { code: 'ZMW', name: 'Kwacha Zambiano' },
-    { code: 'BWP', name: 'Pula de Botsuana' },
-    { code: 'NAD', name: 'Dólar Namibio' },
-    { code: 'SZL', name: 'Lilangeni de Esuatini' },
-    { code: 'LSL', name: 'Loti de Lesoto' },
-    { code: 'MWK', name: 'Kwacha Malauí' },
-    { code: 'MZN', name: 'Metical Mozambiqueño' },
-    { code: 'AOA', name: 'Kwanza Angoleño' },
+    { code: 'ZAR', name: 'Rand Sudafricano', country: 'za' },
+    { code: 'NGN', name: 'Naira Nigeriana', country: 'ng' },
+    { code: 'EGP', name: 'Libra Egipcia', country: 'eg' },
+    { code: 'KES', name: 'Chelín Keniano', country: 'ke' },
+    { code: 'UGX', name: 'Chelín Ugandés', country: 'ug' },
+    { code: 'TZS', name: 'Chelín Tanzano', country: 'tz' },
+    { code: 'ETB', name: 'Birr Etíope', country: 'et' },
+    { code: 'GHS', name: 'Cedi Ghanés', country: 'gh' },
+    { code: 'XOF', name: 'Franco CFA Occidental', country: 'bf' }, // Burkina Faso como representante
+    { code: 'XAF', name: 'Franco CFA Central', country: 'cm' }, // Camerún como representante
+    { code: 'MAD', name: 'Dirham Marroquí', country: 'ma' },
+    { code: 'TND', name: 'Dinar Tunecino', country: 'tn' },
+    { code: 'DZD', name: 'Dinar Argelino', country: 'dz' },
+    { code: 'LYD', name: 'Dinar Libio', country: 'ly' },
+    { code: 'SDG', name: 'Libra Sudanesa', country: 'sd' },
+    { code: 'ZMW', name: 'Kwacha Zambiano', country: 'zm' },
+    { code: 'BWP', name: 'Pula de Botsuana', country: 'bw' },
+    { code: 'NAD', name: 'Dólar Namibio', country: 'na' },
+    { code: 'SZL', name: 'Lilangeni de Esuatini', country: 'sz' },
+    { code: 'LSL', name: 'Loti de Lesoto', country: 'ls' },
+    { code: 'MWK', name: 'Kwacha Malauí', country: 'mw' },
+    { code: 'MZN', name: 'Metical Mozambiqueño', country: 'mz' },
+    { code: 'AOA', name: 'Kwanza Angoleño', country: 'ao' },
     
     // Monedas de Medio Oriente
-    { code: 'SAR', name: 'Riyal Saudí' },
-    { code: 'AED', name: 'Dirham de los EAU' },
-    { code: 'QAR', name: 'Riyal Qatarí' },
-    { code: 'KWD', name: 'Dinar Kuwaití' },
-    { code: 'BHD', name: 'Dinar Bahreiní' },
-    { code: 'OMR', name: 'Rial Omaní' },
-    { code: 'JOD', name: 'Dinar Jordano' },
-    { code: 'LBP', name: 'Libra Libanesa' },
-    { code: 'SYP', name: 'Libra Siria' },
-    { code: 'IQD', name: 'Dinar Iraquí' },
-    { code: 'IRR', name: 'Rial Iraní' },
-    { code: 'AFN', name: 'Afgani Afgano' },
-    { code: 'ILS', name: 'Nuevo Shekel Israelí' },
+    { code: 'SAR', name: 'Riyal Saudí', country: 'sa' },
+    { code: 'AED', name: 'Dirham de los EAU', country: 'ae' },
+    { code: 'QAR', name: 'Riyal Qatarí', country: 'qa' },
+    { code: 'KWD', name: 'Dinar Kuwaití', country: 'kw' },
+    { code: 'BHD', name: 'Dinar Bahreiní', country: 'bh' },
+    { code: 'OMR', name: 'Rial Omaní', country: 'om' },
+    { code: 'JOD', name: 'Dinar Jordano', country: 'jo' },
+    { code: 'LBP', name: 'Libra Libanesa', country: 'lb' },
+    { code: 'SYP', name: 'Libra Siria', country: 'sy' },
+    { code: 'IQD', name: 'Dinar Iraquí', country: 'iq' },
+    { code: 'IRR', name: 'Rial Iraní', country: 'ir' },
+    { code: 'AFN', name: 'Afgani Afgano', country: 'af' },
+    { code: 'ILS', name: 'Nuevo Shekel Israelí', country: 'il' },
     
     // Monedas de Oceanía
-    { code: 'FJD', name: 'Dólar Fiyiano' },
-    { code: 'PGK', name: 'Kina de Papúa Nueva Guinea' },
-    { code: 'SBD', name: 'Dólar de las Islas Salomón' },
-    { code: 'VUV', name: 'Vatu de Vanuatu' },
-    { code: 'WST', name: 'Tala Samoano' },
-    { code: 'TOP', name: 'Pa\'anga Tongano' },
+    { code: 'FJD', name: 'Dólar Fiyiano', country: 'fj' },
+    { code: 'PGK', name: 'Kina de Papúa Nueva Guinea', country: 'pg' },
+    { code: 'SBD', name: 'Dólar de las Islas Salomón', country: 'sb' },
+    { code: 'VUV', name: 'Vatu de Vanuatu', country: 'vu' },
+    { code: 'WST', name: 'Tala Samoano', country: 'ws' },
+    { code: 'TOP', name: 'Pa\'anga Tongano', country: 'to' },
     
     // Otras monedas importantes
-    { code: 'RWF', name: 'Franco Ruandés' },
-    { code: 'BIF', name: 'Franco Burundés' },
-    { code: 'DJF', name: 'Franco Yibutiano' },
-    { code: 'ERN', name: 'Nakfa Eritreo' },
-    { code: 'SOS', name: 'Chelín Somalí' },
-    { code: 'SCR', name: 'Rupia de Seychelles' },
-    { code: 'MUR', name: 'Rupia Mauriciana' },
-    { code: 'MVR', name: 'Rufiyaa Maldiva' },
-    { code: 'KMF', name: 'Franco Comorense' },
-    { code: 'MGA', name: 'Ariary Malgache' },
-    { code: 'STN', name: 'Dobra de Santo Tomé' },
-    { code: 'CVE', name: 'Escudo Caboverdiano' },
-    { code: 'GNF', name: 'Franco Guineano' },
-    { code: 'SLE', name: 'Leone de Sierra Leona' },
-    { code: 'LRD', name: 'Dólar Liberiano' },
-    { code: 'GMD', name: 'Dalasi Gambiano' }
+    { code: 'RWF', name: 'Franco Ruandés', country: 'rw' },
+    { code: 'BIF', name: 'Franco Burundés', country: 'bi' },
+    { code: 'DJF', name: 'Franco Yibutiano', country: 'dj' },
+    { code: 'ERN', name: 'Nakfa Eritreo', country: 'er' },
+    { code: 'SOS', name: 'Chelín Somalí', country: 'so' },
+    { code: 'SCR', name: 'Rupia de Seychelles', country: 'sc' },
+    { code: 'MUR', name: 'Rupia Mauriciana', country: 'mu' },
+    { code: 'MVR', name: 'Rufiyaa Maldiva', country: 'mv' },
+    { code: 'KMF', name: 'Franco Comorense', country: 'km' },
+    { code: 'MGA', name: 'Ariary Malgache', country: 'mg' },
+    { code: 'STN', name: 'Dobra de Santo Tomé', country: 'st' },
+    { code: 'CVE', name: 'Escudo Caboverdiano', country: 'cv' },
+    { code: 'GNF', name: 'Franco Guineano', country: 'gn' },
+    { code: 'SLE', name: 'Leone de Sierra Leona', country: 'sl' },
+    { code: 'LRD', name: 'Dólar Liberiano', country: 'lr' },
+    { code: 'GMD', name: 'Dalasi Gambiano', country: 'gm' }
 ];
 
 /**
@@ -249,6 +249,32 @@ function getCurrencyName(currencyCode) {
 }
 
 /**
+ * Función para obtener la URL de la bandera por código de moneda
+ * @param {string} currencyCode - Código de moneda
+ * @returns {string} - URL de la bandera o null si no se encuentra
+ */
+function getFlagUrl(currencyCode) {
+    const currency = currencies.find(curr => curr.code === currencyCode);
+    return currency ? `https://flagcdn.com/${currency.country}.svg` : null;
+}
+
+/**
+ * Función para obtener información completa de una moneda
+ * @param {string} currencyCode - Código de moneda
+ * @returns {Object|null} - Objeto con información completa de la moneda
+ */
+function getCurrencyInfo(currencyCode) {
+    const currency = currencies.find(curr => curr.code === currencyCode);
+    if (currency) {
+        return {
+            ...currency,
+            flagUrl: `https://flagcdn.com/${currency.country}.svg`
+        };
+    }
+    return null;
+}
+
+/**
  * Función para actualizar las tasas de cambio automáticamente
  * @param {number} intervalMinutes - Intervalo en minutos para actualizar (por defecto 10)
  */
@@ -277,6 +303,8 @@ if (typeof window !== 'undefined') {
         getCurrentRates,
         isCurrencySupported,
         getCurrencyName,
+        getFlagUrl,
+        getCurrencyInfo,
         startAutoUpdate
     };
 }
@@ -290,6 +318,8 @@ if (typeof module !== 'undefined' && module.exports) {
         getCurrentRates,
         isCurrencySupported,
         getCurrencyName,
+        getFlagUrl,
+        getCurrencyInfo,
         startAutoUpdate,
         currencies
     };

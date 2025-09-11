@@ -47,14 +47,42 @@ h1 {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    gap: 10px;
 }
 
 .currency-select {
-    width: 40%;
+    width: 100%;
     padding: 0.8rem;
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 1rem;
+}
+
+/* Estilos para las banderas */
+.currency-flag {
+    width: 24px;
+    height: 18px;
+    border-radius: 3px;
+    object-fit: cover;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease;
+}
+
+.currency-flag:hover {
+    transform: scale(1.1);
+}
+
+/* Contenedor de moneda con bandera */
+.currency-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 45%;
+}
+
+/* Contenedor de destino con orden invertido */
+#toContainer {
+    flex-direction: row-reverse;
 }
 
 .swap-btn {
@@ -316,6 +344,15 @@ h1 {
 
     .currency-select {
         font-size: 0.9rem;
+    }
+
+    .currency-container {
+        width: 45%;
+    }
+
+    .currency-flag {
+        width: 20px;
+        height: 15px;
     }
 
     .sidebar {
@@ -663,6 +700,12 @@ h1 {
 [data-theme="dark"] .currency-select option {
     background: var(--input-bg);
     color: var(--text-color);
+}
+
+/* Banderas en modo oscuro */
+[data-theme="dark"] .currency-flag {
+    box-shadow: 0 1px 3px rgba(255,255,255,0.1);
+    border: 1px solid var(--border-color);
 }
 
 /* Scrollbar personalizada para modo oscuro */

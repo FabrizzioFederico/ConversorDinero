@@ -29,20 +29,115 @@ function loadCurrencies() {
     
     // Agregar todas las monedas a ambos selectores
     currencies.forEach(currency => {
+        const flagUrl = window.CurrencyAPI.getFlagUrl(currency.code);
+        
+        // Crear opción con bandera y código
         const option1 = document.createElement('option');
         option1.value = currency.code;
-        option1.textContent = `${currency.code} - ${currency.name}`;
+        option1.textContent = currency.code;
+        option1.setAttribute('data-flag', flagUrl);
         fromCurrencySelect.appendChild(option1);
         
         const option2 = document.createElement('option');
         option2.value = currency.code;
-        option2.textContent = `${currency.code} - ${currency.name}`;
+        option2.textContent = currency.code;
+        option2.setAttribute('data-flag', flagUrl);
         toCurrencySelect.appendChild(option2);
     });
     
     // Establecer valores por defecto
     fromCurrencySelect.value = 'USD';
     toCurrencySelect.value = 'EUR';
+    
+    // Aplicar estilos personalizados a los selectores
+    customizeSelectWithFlags();
+}
+
+/**
+ * Función para personalizar los selectores con banderas
+ */
+function customizeSelectWithFlags() {
+    // Crear elementos de bandera
+    createFlagDisplays();
+    
+    // Actualizar banderas cuando cambian los selectores
+    fromCurrencySelect.addEventListener('change', updateFromFlag);
+    toCurrencySelect.addEventListener('change', updateToFlag);
+    
+    // Inicializar banderas
+    updateFromFlag();
+    updateToFlag();
+}
+
+/**
+ * Función para crear los elementos de visualización de banderas
+ */
+function createFlagDisplays() {
+    // Envolver el selector de origen en un contenedor con bandera
+    if (!document.getElementById('fromContainer')) {
+        const fromContainer = document.createElement('div');
+        fromContainer.id = 'fromContainer';
+        fromContainer.className = 'currency-container';
+        
+        const fromFlag = document.createElement('img');
+        fromFlag.id = 'fromFlag';
+        fromFlag.className = 'currency-flag';
+        fromFlag.width = 24;
+        fromFlag.height = 18;
+        
+        // Mover el selector al contenedor
+        fromCurrencySelect.parentNode.insertBefore(fromContainer, fromCurrencySelect);
+        fromContainer.appendChild(fromFlag);
+        fromContainer.appendChild(fromCurrencySelect);
+    }
+    
+    // Envolver el selector de destino en un contenedor con bandera
+    if (!document.getElementById('toContainer')) {
+        const toContainer = document.createElement('div');
+        toContainer.id = 'toContainer';
+        toContainer.className = 'currency-container';
+        
+        const toFlag = document.createElement('img');
+        toFlag.id = 'toFlag';
+        toFlag.className = 'currency-flag';
+        toFlag.width = 24;
+        toFlag.height = 18;
+        
+        // Mover el selector al contenedor
+        toCurrencySelect.parentNode.insertBefore(toContainer, toCurrencySelect);
+        toContainer.appendChild(toFlag);
+        toContainer.appendChild(toCurrencySelect);
+    }
+}
+
+/**
+ * Función para actualizar la bandera de la moneda de origen
+ */
+function updateFromFlag() {
+    const flagElement = document.getElementById('fromFlag');
+    const flagUrl = window.CurrencyAPI.getFlagUrl(fromCurrencySelect.value);
+    const currencyInfo = window.CurrencyAPI.getCurrencyInfo(fromCurrencySelect.value);
+    
+    if (flagElement && flagUrl && currencyInfo) {
+        flagElement.src = flagUrl;
+        flagElement.alt = currencyInfo.name;
+        flagElement.title = `${fromCurrencySelect.value} - ${currencyInfo.name}`;
+    }
+}
+
+/**
+ * Función para actualizar la bandera de la moneda de destino
+ */
+function updateToFlag() {
+    const flagElement = document.getElementById('toFlag');
+    const flagUrl = window.CurrencyAPI.getFlagUrl(toCurrencySelect.value);
+    const currencyInfo = window.CurrencyAPI.getCurrencyInfo(toCurrencySelect.value);
+    
+    if (flagElement && flagUrl && currencyInfo) {
+        flagElement.src = flagUrl;
+        flagElement.alt = currencyInfo.name;
+        flagElement.title = `${toCurrencySelect.value} - ${currencyInfo.name}`;
+    }
 }
 
 /**
@@ -177,6 +272,10 @@ function swapCurrencies() {
     
     fromCurrencySelect.value = toValue;
     toCurrencySelect.value = fromValue;
+    
+    // Actualizar banderas después del intercambio
+    updateFromFlag();
+    updateToFlag();
     
     // Agregar animación al botón de intercambio
     swapButton.classList.add('swap-animation');
@@ -403,8 +502,8 @@ function updateHistoryDisplay() {
         item.className = 'history-item';
         item.innerHTML = `
             <div class="conversion-details">
-                ${conversion.amount} ${conversion.fromCurrency} = 
-                ${conversion.result} ${conversion.toCurrency}
+                ${conversion.amount.toFixed(2)} ${conversion.fromCurrency} = 
+                ${conversion.result.toFixed(2)} ${conversion.toCurrency}
                 <br>
                 <small>${new Date(conversion.timestamp).toLocaleString()}</small>
             </div>
