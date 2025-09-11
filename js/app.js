@@ -43,6 +43,7 @@ let currentPage = 1;
 const prevPageBtn = document.getElementById('prevPage');
 const nextPageBtn = document.getElementById('nextPage');
 const pageInfo = document.getElementById('pageInfo');
+const paginationContainer = document.querySelector('.pagination');
 
 // Estado de la aplicación
 let isLoading = false;
@@ -614,6 +615,25 @@ function updateHistoryDisplay() {
     
     historyList.innerHTML = '';
     
+    // Si no hay conversiones, mostrar mensaje y ocultar paginación
+    if (history.length === 0) {
+        historyList.innerHTML = `
+            <div class="no-history-message">
+                <p>No hay conversiones en el historial</p>
+                <small>Las conversiones aparecerán aquí después de realizar una conversión</small>
+            </div>
+        `;
+        // Ocultar paginación con transición suave
+        paginationContainer.style.opacity = '0';
+        paginationContainer.style.visibility = 'hidden';
+        paginationContainer.style.transform = 'translateY(10px)';
+        setTimeout(() => {
+            paginationContainer.style.display = 'none';
+        }, 300);
+        return;
+    }
+    
+    // Mostrar conversiones
     currentItems.forEach(conversion => {
         const item = document.createElement('div');
         item.className = 'history-item';
@@ -632,9 +652,32 @@ function updateHistoryDisplay() {
         historyList.appendChild(item);
     });
     
-    pageInfo.textContent = `Página ${currentPage} de ${totalPages || 1}`;
-    prevPageBtn.disabled = currentPage === 1;
-    nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+    // Mostrar/ocultar paginación según sea necesario
+    if (totalPages <= 1) {
+        // Si solo hay una página o menos, ocultar paginación con transición suave
+        paginationContainer.style.opacity = '0';
+        paginationContainer.style.visibility = 'hidden';
+        paginationContainer.style.transform = 'translateY(10px)';
+        // Usar setTimeout para cambiar display después de la transición
+        setTimeout(() => {
+            if (totalPages <= 1) {
+                paginationContainer.style.display = 'none';
+            }
+        }, 300);
+    } else {
+        // Si hay múltiples páginas, mostrar paginación con transición suave
+        paginationContainer.style.display = 'flex';
+        // Pequeño delay para permitir que display se aplique antes de la transición
+        setTimeout(() => {
+            paginationContainer.style.opacity = '1';
+            paginationContainer.style.visibility = 'visible';
+            paginationContainer.style.transform = 'translateY(0)';
+        }, 10);
+        
+        pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage === totalPages;
+    }
 }
 
 // Funciones para cambiar de página

@@ -509,6 +509,36 @@ html.theme-changing body {
     padding: 20px;
 }
 
+/* Mensaje cuando no hay historial */
+.no-history-message {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #7f8c8d;
+    font-family: 'Inter', sans-serif;
+}
+
+.no-history-message p {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.no-history-message small {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    line-height: 1.4;
+}
+
+/* Estilos para modo oscuro del mensaje */
+[data-theme="dark"] .no-history-message p {
+    color: #ecf0f1;
+}
+
+[data-theme="dark"] .no-history-message {
+    color: #bdc3c7;
+}
+
 .history-item {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(12px);
@@ -616,6 +646,11 @@ html.theme-changing body {
     border-top: 1px solid var(--border-color);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
+    /* Transición suave para mostrar/ocultar */
+    transition: 
+        opacity var(--medium-transition),
+        visibility var(--medium-transition),
+        transform var(--medium-transition);
 }
 
 .pagination-btn {
