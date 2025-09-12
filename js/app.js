@@ -1655,10 +1655,12 @@ async function loadNews() {
             // Remover la clase de ocultación inicial
             newsContainer.classList.remove('news-hidden');
             
-            // Cambiar estado del layout para activar animación del conversor
+            // Cambiar estado del layout solo para indicar que las noticias están cargadas
             if (mainLayout) {
                 mainLayout.classList.remove('news-loading');
                 mainLayout.classList.add('news-loaded');
+                // Mantener la clase converter-ready para que el conversor siga visible
+                mainLayout.classList.add('converter-ready');
             }
             
             // Agregar animación fluida solo para desktop
@@ -1666,16 +1668,16 @@ async function loadNews() {
                 // Establecer estado loading inmediatamente para evitar flash
                 newsContainer.classList.add('loading');
                 
-                // Animar el contenedor después de un breve delay
+                // Animar el contenedor de noticias independientemente del conversor
                 setTimeout(() => {
                     newsContainer.classList.remove('loading');
                     newsContainer.classList.add('fade-in');
-                }, 300); // Delay para permitir que el contenido se cargue
+                }, 100); // Delay muy corto ya que el conversor no espera
             } else {
                 // En móvil, mostrar normalmente sin animación usando clase ready
                 newsContainer.classList.add('ready');
             }
-            console.log('✅ Contenedor de noticias mostrado y layout animado');
+            console.log('✅ Contenedor de noticias mostrado - conversor ya estaba visible');
         } else {
             console.error('❌ No se encontró el contenedor de noticias');
         }
@@ -1800,7 +1802,17 @@ window.addEventListener('resize', () => {
 
 // Inicializar noticias cuando se carga la página
 document.addEventListener('DOMContentLoaded', function() {
-    // Verificar que todas las dependencias estén cargadas
+    // Mostrar el conversor inmediatamente al cargar la página
+    const mainLayout = document.querySelector('.main-layout');
+    if (mainLayout) {
+        // Activar animación inmediata del conversor
+        setTimeout(() => {
+            mainLayout.classList.add('converter-ready');
+            console.log('✅ Conversor mostrado inmediatamente');
+        }, 200); // Delay mínimo para que se aplique la transición
+    }
+    
+    // Verificar que todas las dependencias estén cargadas para las noticias
     const checkDependencies = () => {
         if (typeof Swiper !== 'undefined') {
             console.log('✅ Swiper.js cargado correctamente');

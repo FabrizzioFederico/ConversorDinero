@@ -60,7 +60,7 @@ body.no-scroll {
     width: 100%;
     max-width: 1400px;
     align-items: center; /* Cambiado a center para mantener alineación central */
-    justify-content: center;
+    justify-content: space-between; /* Siempre distribución normal */
     flex-direction: row; /* Por defecto horizontal para desktop */
     min-height: 550px; /* Altura mínima para mantener consistencia */
     /* Transiciones suaves para cambios de layout */
@@ -70,14 +70,15 @@ body.no-scroll {
         align-items 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
-/* Estado inicial cuando no hay noticias cargadas */
+/* Estados del layout - ahora solo para controlar la visibilidad del conversor */
 .main-layout.news-loading {
-    justify-content: center; /* Conversor centrado cuando no hay noticias */
+    /* Layout con conversor oculto esperando carga de noticias */
+    position: relative;
 }
 
-/* Estado final cuando las noticias están cargadas */
 .main-layout.news-loaded {
-    justify-content: space-between; /* Distribución normal con noticias */
+    /* Layout completo con conversor y noticias visibles */
+    position: relative;
 }
 
 .converter-container {
@@ -85,11 +86,32 @@ body.no-scroll {
     max-width: 500px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* Comenzar desde arriba pero manteniendo alineación central con news */
-    /* Transiciones suaves para el desplazamiento del conversor */
+    justify-content: flex-start;
+    /* Posición inicial: oculto fuera de pantalla a la izquierda */
+    transform: translateX(-120%);
+    opacity: 0;
+    /* Transiciones suaves para la entrada del conversor */
     transition: 
         transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1),
-        margin 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+        opacity 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Estado inicial - conversor aparece rápidamente sin esperar noticias */
+.main-layout.converter-ready .converter-container {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Estado específico del conversor cuando no hay noticias - visible desde el inicio */
+.main-layout.news-loading .converter-container {
+    transform: translateX(0); /* Conversor visible inmediatamente */
+    opacity: 1;
+}
+
+/* Estado específico del conversor cuando aparecen las noticias - se mantiene visible */
+.main-layout.news-loaded .converter-container {
+    transform: translateX(0); /* Posición final visible */
+    opacity: 1;
 }
 
 .news-container {
@@ -2250,6 +2272,14 @@ h1 {
         gap: 1.5rem;
         align-items: center;
         margin-bottom: 2rem; /* Separación con el footer en móvil */
+        /* Deshabilitar transiciones de layout en móvil */
+        transition: none !important;
+    }
+    
+    /* Estados de layout sin efecto en móvil */
+    .main-layout.news-loading,
+    .main-layout.news-loaded {
+        justify-content: center !important;
     }
     
     .converter-container {
@@ -2257,6 +2287,17 @@ h1 {
         width: 100%;
         max-width: 400px;
         order: 1; /* Conversor primero */
+        /* Deshabilitar transiciones del conversor en móvil */
+        transition: none !important;
+        transform: none !important; /* Sin desplazamiento en móvil */
+        opacity: 1 !important; /* Siempre visible en móvil */
+    }
+    
+    /* Estados específicos para móvil - sin animaciones */
+    .main-layout.news-loading .converter-container,
+    .main-layout.news-loaded .converter-container {
+        transform: none !important;
+        opacity: 1 !important;
     }
     
     .news-container {
