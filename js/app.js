@@ -18,26 +18,8 @@ const gamingCheckbox = document.getElementById('gamingCheckbox');
 const argentineTaxContainer = document.getElementById('argentineTaxContainer');
 // Función para calcular items por página basado en el tamaño de pantalla
 function calculateItemsPerPage() {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    
-    // Mobile: pantallas pequeñas
-    if (width <= 768) {
-        return 6;
-    }
-    
-    // Tablets en modo portrait o laptops pequeñas
-    if (width <= 1024 || height <= 768) {
-        return 4;
-    }
-    
-    // Desktop/laptops grandes: pantallas más grandes
-    if (width <= 1440) {
-        return 6;
-    }
-    
-    // Pantallas muy grandes (4K, ultrawide, etc.)
-    return 8;
+    // Siempre mostrar 5 conversiones por página (tanto en móvil como desktop)
+    return 5;
 }
 
 let ITEMS_PER_PAGE = calculateItemsPerPage();
@@ -942,6 +924,11 @@ function toggleMenu() {
     // Ocultar el botón hamburguesa cuando se abre el menú
     if (sidebar.classList.contains('active')) {
         menuToggle.classList.add('hidden');
+        // Prevenir scroll cuando el menú está abierto
+        document.body.classList.add('no-scroll');
+    } else {
+        // Permitir scroll cuando el menú se cierra
+        document.body.classList.remove('no-scroll');
     }
 }
 
@@ -952,6 +939,9 @@ function closeMenuHandler() {
     
     // Mostrar el botón hamburguesa cuando se cierra el menú
     menuToggle.classList.remove('hidden');
+    
+    // Permitir scroll cuando se cierra el menú
+    document.body.classList.remove('no-scroll');
 }
 
 // Funciones para el modo noche
@@ -965,11 +955,11 @@ function toggleTheme() {
     document.documentElement.classList.add('theme-changing');
     document.body.classList.add('theme-changing');
     
-    // Agregar animación al botón con mayor duración
+    // Agregar animación al botón inmediatamente
     themeToggle.classList.add('rotating');
     
-    // Transición más fluida con múltiples pasos
-    setTimeout(() => {
+    // Cambio inmediato para mejor sincronización
+    requestAnimationFrame(() => {
         isDarkMode = !isDarkMode;
         
         // Aplicar el tema
@@ -984,24 +974,24 @@ function toggleTheme() {
         }
         
         console.log(`🎨 Tema cambiado a: ${isDarkMode ? 'Oscuro' : 'Claro'}`);
-    }, 150); // Delay más corto para cambio más natural
+    });
     
-    // Remover animaciones con timing optimizado
+    // Remover animaciones con timing sincronizado con CSS
     setTimeout(() => {
         themeToggle.classList.remove('rotating');
-    }, 600);
+    }, 500); // Sincronizado con --theme-transition-duration
     
     setTimeout(() => {
         document.documentElement.classList.remove('theme-changing');
         document.body.classList.remove('theme-changing');
-    }, 800); // Tiempo extendido para transición más suave
+    }, 550); // Ligeramente después para asegurar transición completa
 }
 
 function loadTheme() {
     const savedTheme = localStorage.getItem('darkMode');
     
-    // Aplicar tema sin transición al cargar para evitar flash, pero con duración más corta
-    document.documentElement.style.setProperty('--theme-transition-duration', '0.1s');
+    // Aplicar tema sin transición al cargar para evitar flash
+    document.documentElement.style.setProperty('--theme-transition-duration', '0s');
     
     if (savedTheme === 'true') {
         isDarkMode = true;
@@ -1013,7 +1003,7 @@ function loadTheme() {
         themeToggle.querySelector('.theme-icon').textContent = '🌙';
     }
     
-    // Restaurar transiciones suaves después del primer frame
+    // Restaurar transiciones suaves después de la carga inicial
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             document.documentElement.style.removeProperty('--theme-transition-duration');
@@ -1119,7 +1109,7 @@ function updateHistoryDisplay() {
     
     historyList.innerHTML = '';
     
-    // Si no hay conversiones, mostrar mensaje y ocultar paginación
+    // Si no hay conversiones, mostrar mensaje pero mantener paginación visible
     if (history.length === 0) {
         historyList.innerHTML = `
             <div class="no-history-message">
@@ -1127,13 +1117,16 @@ function updateHistoryDisplay() {
                 <small>Las conversiones aparecerán aquí después de realizar una conversión</small>
             </div>
         `;
-        // Ocultar paginación con transición suave
-        paginationContainer.style.opacity = '0';
-        paginationContainer.style.visibility = 'hidden';
-        paginationContainer.style.transform = 'translateY(10px)';
-        setTimeout(() => {
-            paginationContainer.style.display = 'none';
-        }, 300);
+        // Mostrar paginación siempre, pero con botones deshabilitados
+        paginationContainer.style.display = 'flex';
+        paginationContainer.style.opacity = '1';
+        paginationContainer.style.visibility = 'visible';
+        paginationContainer.style.transform = 'translateY(0)';
+        
+        // Configurar paginación para estado vacío
+        pageInfo.textContent = 'Página 1 de 1';
+        prevPageBtn.disabled = true;
+        nextPageBtn.disabled = true;
         return;
     }
     
@@ -1167,28 +1160,19 @@ function updateHistoryDisplay() {
         historyList.appendChild(item);
     });
     
-    // Mostrar/ocultar paginación según sea necesario
+    // Mostrar paginación siempre, pero configurar botones según disponibilidad
+    paginationContainer.style.display = 'flex';
+    paginationContainer.style.opacity = '1';
+    paginationContainer.style.visibility = 'visible';
+    paginationContainer.style.transform = 'translateY(0)';
+    
     if (totalPages <= 1) {
-        // Si solo hay una página o menos, ocultar paginación con transición suave
-        paginationContainer.style.opacity = '0';
-        paginationContainer.style.visibility = 'hidden';
-        paginationContainer.style.transform = 'translateY(10px)';
-        // Usar setTimeout para cambiar display después de la transición
-        setTimeout(() => {
-            if (totalPages <= 1) {
-                paginationContainer.style.display = 'none';
-            }
-        }, 300);
+        // Si solo hay una página o menos, deshabilitar botones pero mantener visible
+        pageInfo.textContent = `Página 1 de ${totalPages || 1}`;
+        prevPageBtn.disabled = true;
+        nextPageBtn.disabled = true;
     } else {
-        // Si hay múltiples páginas, mostrar paginación con transición suave
-        paginationContainer.style.display = 'flex';
-        // Pequeño delay para permitir que display se aplique antes de la transición
-        setTimeout(() => {
-            paginationContainer.style.opacity = '1';
-            paginationContainer.style.visibility = 'visible';
-            paginationContainer.style.transform = 'translateY(0)';
-        }, 10);
-        
+        // Si hay múltiples páginas, configurar normalmente
         pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
         prevPageBtn.disabled = currentPage === 1;
         nextPageBtn.disabled = currentPage === totalPages;
@@ -1307,7 +1291,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Calcular items por página para la pantalla actual
     ITEMS_PER_PAGE = calculateItemsPerPage();
-    console.log(`📱 Pantalla detectada: ${window.innerWidth}x${window.innerHeight} - ${ITEMS_PER_PAGE} elementos por página`);
+    console.log(`📱 Pantalla detectada: ${window.innerWidth}x${window.innerHeight} - Mostrando ${ITEMS_PER_PAGE} conversiones por página`);
     
     // Cargar tema guardado
     loadTheme();
@@ -1452,7 +1436,7 @@ window.addEventListener('resize', () => {
         }
         
         updateHistoryDisplay();
-        console.log(`📱 Pantalla redimensionada: ${ITEMS_PER_PAGE} elementos por página`);
+        console.log(`📱 Pantalla redimensionada: Mostrando ${ITEMS_PER_PAGE} conversiones por página`);
     }
 });
 
@@ -1773,7 +1757,7 @@ window.addEventListener('resize', () => {
         }
         
         updateHistoryDisplay();
-        console.log(`📱 Pantalla redimensionada: ${ITEMS_PER_PAGE} elementos por página`);
+        console.log(`📱 Pantalla redimensionada: Mostrando ${ITEMS_PER_PAGE} conversiones por página`);
     }
     
     // Actualizar Swiper para el nuevo tamaño de pantalla
