@@ -1673,13 +1673,15 @@ async function loadNews() {
                     newsContainer.classList.add('fade-in');
                 }, 100);
             } else {
-                // Móvil: animación desde abajo con delay suave
+                // Móvil: animación desde la izquierda
+                console.log('📱 Iniciando animación móvil desde la izquierda');
                 newsContainer.classList.add('loading');
                 
                 setTimeout(() => {
                     newsContainer.classList.remove('loading');
                     newsContainer.classList.add('ready');
-                }, 200); // Delay ligeramente mayor para móvil
+                    console.log('📱 Animación móvil completada');
+                }, 300); // Delay para asegurar que se vea la transición
             }
             console.log('✅ Contenedor de noticias mostrado con animación -', isMobile() ? 'móvil' : 'desktop');
         } else {
