@@ -295,31 +295,28 @@ function displayResult(amount, fromCurrency, toCurrency, conversionResult) {
     // Crear el texto principal del resultado
     let resultText = `${originalFormatted} ${fromCurrency} = ${formattedFinalAmount} ${toCurrency}`;
     
-    // Agregar desglose de impuestos si corresponde
-    if (hasArgentineTaxes && taxBreakdown) {
+    // Agregar desglose de impuestos solo si es USD→ARS o EUR→ARS
+    if (hasArgentineTaxes && taxBreakdown && toCurrency === 'ARS' && (fromCurrency === 'USD' || fromCurrency === 'EUR')) {
         const baseFormatted = baseAmount.toLocaleString('es-ES', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
         
-        resultText += `\n\nDesglose:`;
-        resultText += `\nTipo de cambio: ${baseFormatted} ${toCurrency}`;
+        // Calcular impuestos totales correctamente (diferencia entre total y base)
+        const totalTaxes = finalAmount - baseAmount;
         
-        if (taxBreakdown.taxes) {
-            Object.values(taxBreakdown.taxes).forEach(tax => {
-                if (tax.applied) {
-                    const taxAmountFormatted = tax.amount.toLocaleString('es-ES', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-                    resultText += `\n${tax.description}: +${taxAmountFormatted} ${toCurrency}`;
-                } else if (tax.exemptReason) {
-                    resultText += `\n${tax.description}: Exento (${tax.exemptReason})`;
-                }
-            });
-        }
+        const totalTaxesFormatted = totalTaxes.toLocaleString('es-ES', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
         
-        resultText += `\nTotal con impuestos: ${formattedFinalAmount} ${toCurrency}`;
+        // Para USD→ARS y EUR→ARS, mostrar solo el desglose sin la línea de conversión
+        resultText = `Sin impuestos\n$ ${baseFormatted}\n\nImpuestos totales\n$ ${totalTaxesFormatted}\n\nTotal\n$ ${formattedFinalAmount}`;
+        
+        // No agregar clase especial - mantener el estilo normal
+    } else {
+        // Remover clase especial si no es desglose argentino (por compatibilidad)
+        convertedAmountSpan.classList.remove('argentine-breakdown');
     }
     
     convertedAmountSpan.textContent = resultText;
@@ -477,6 +474,249 @@ async function performConversion() {
 }
 
 /**
+ * Función para conversión en tiempo real (sin guardar en historial)
+ */
+async function performRealtimeConversion() {
+    const amount = parseFloat(amountInput.value);
+    const fromCurrency = fromCurrencySelect.value;
+    const toCurrency = toCurrencySelect.value;
+    
+    // Si no hay cantidad válida, ocultar resultado
+    if (!amount || amount <= 0) {
+        resultDiv.style.display = 'none';
+        return;
+    }
+    
+    // Si no hay monedas seleccionadas, no hacer nada
+    if (!fromCurrency || !toCurrency) {
+        return;
+    }
+    
+    try {
+        // Obtener tasas de cambio actuales
+        const rates = await window.CurrencyAPI.fetchExchangeRates('USD');
+        
+        // Verificar si se deben aplicar impuestos argentinos
+        const shouldApplyArgentineTaxes = (fromCurrency === 'USD' || fromCurrency === 'EUR') && toCurrency === 'ARS';
+        const isGaming = gamingCheckbox ? gamingCheckbox.checked : false;
+        
+        // Cargar impuestos argentinos si es necesario
+        if (shouldApplyArgentineTaxes) {
+            try {
+                await window.CurrencyAPI.fetchArgentineTaxes();
+            } catch (error) {
+                console.warn('⚠️ Error al cargar impuestos, usando valores por defecto');
+            }
+        }
+        
+        // Realizar conversión con o sin impuestos
+        const conversionResult = window.CurrencyAPI.convertCurrency(
+            amount, 
+            fromCurrency, 
+            toCurrency, 
+            rates,
+            shouldApplyArgentineTaxes,
+            isGaming
+        );
+        
+        // Guardar datos de la conversión actual para posible guardado
+        lastConversionData = {
+            amount,
+            fromCurrency,
+            toCurrency,
+            shouldApplyArgentineTaxes,
+            isGaming,
+            conversionResult,
+            rates
+        };
+        
+        // Mostrar resultado sin guardarlo
+        displayRealtimeResult(amount, fromCurrency, toCurrency, conversionResult);
+        
+        // Mostrar/ocultar controles de impuestos argentinos
+        if (shouldApplyArgentineTaxes && argentineTaxContainer) {
+            argentineTaxContainer.style.display = 'block';
+        } else if (argentineTaxContainer) {
+            argentineTaxContainer.style.display = 'none';
+        }
+        
+        console.log('🔄 Conversión en tiempo real realizada');
+        
+    } catch (error) {
+        console.error('Error en la conversión en tiempo real:', error);
+        showError(`Error: ${error.message}`);
+    }
+}
+
+/**
+ * Función para mostrar resultado en tiempo real (sin auto-reset)
+ */
+function displayRealtimeResult(amount, fromCurrency, toCurrency, conversionResult) {
+    // Si el resultado es un número simple (conversión sin impuestos)
+    let finalAmount, baseAmount, hasArgentineTaxes, taxBreakdown;
+    
+    if (typeof conversionResult === 'number') {
+        finalAmount = conversionResult;
+        baseAmount = conversionResult;
+        hasArgentineTaxes = false;
+        taxBreakdown = null;
+    } else {
+        finalAmount = conversionResult.convertedAmount;
+        baseAmount = conversionResult.baseAmount;
+        hasArgentineTaxes = conversionResult.hasArgentineTaxes;
+        taxBreakdown = conversionResult.breakdown;
+    }
+    
+    const formattedFinalAmount = finalAmount.toLocaleString('es-ES', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    const originalFormatted = amount.toLocaleString('es-ES', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    // Crear el texto principal del resultado
+    let resultText = `${originalFormatted} ${fromCurrency} = ${formattedFinalAmount} ${toCurrency}`;
+    
+    // Agregar desglose de impuestos solo si es USD→ARS o EUR→ARS
+    if (hasArgentineTaxes && taxBreakdown && toCurrency === 'ARS' && (fromCurrency === 'USD' || fromCurrency === 'EUR')) {
+        const baseFormatted = baseAmount.toLocaleString('es-ES', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        // Calcular impuestos totales correctamente (diferencia entre total y base)
+        const totalTaxes = finalAmount - baseAmount;
+        
+        const totalTaxesFormatted = totalTaxes.toLocaleString('es-ES', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        // Para USD→ARS y EUR→ARS, mostrar solo el desglose sin la línea de conversión
+        resultText = `Sin impuestos\n$ ${baseFormatted}\n\nImpuestos totales\n$ ${totalTaxesFormatted}\n\nTotal\n$ ${formattedFinalAmount}`;
+        
+        // No agregar clase especial - mantener el estilo normal
+    } else {
+        // Remover clase especial si no es desglose argentino (por compatibilidad)
+        convertedAmountSpan.classList.remove('argentine-breakdown');
+    }
+    
+    convertedAmountSpan.textContent = resultText;
+    
+    // Remover clases de estado anterior
+    convertedAmountSpan.classList.remove('error-text');
+    convertedAmountSpan.style.color = '';
+    
+    // Verificar si el resultado ya está visible
+    const isCurrentlyVisible = resultDiv.style.display === 'block' && resultDiv.classList.contains('show');
+    
+    if (!isCurrentlyVisible) {
+        // Si no está visible, mostrar con animación de entrada
+        resultDiv.style.display = 'block';
+        resultDiv.classList.remove('result-slide-out', 'result-update');
+        resultDiv.classList.add('result-slide-in');
+        
+        // Agregar la clase 'show' después de un breve delay para sincronizar la animación
+        setTimeout(() => {
+            resultDiv.classList.add('show');
+        }, 10);
+        
+        // Limpiar la clase de animación después de que termine
+        setTimeout(() => {
+            resultDiv.classList.remove('result-slide-in');
+        }, 400);
+    } else {
+        // Si ya está visible, hacer una animación de actualización sutil
+        resultDiv.classList.remove('result-slide-in', 'result-slide-out');
+        resultDiv.classList.add('result-update');
+        
+        // Limpiar la clase de animación después de que termine
+        setTimeout(() => {
+            resultDiv.classList.remove('result-update');
+        }, 300);
+    }
+    
+    // NO hay auto-reset para conversión en tiempo real
+}
+
+/**
+ * Función para guardar conversión en historial (nueva función del botón)
+ */
+async function saveConversion() {
+    // Verificar que hay una conversión en lastConversionData
+    if (!lastConversionData) {
+        showError('Primero ingrese una cantidad para convertir');
+        return;
+    }
+    
+    const { amount, fromCurrency, toCurrency, shouldApplyArgentineTaxes, isGaming, conversionResult } = lastConversionData;
+    
+    // Extraer el monto final para el historial
+    const finalAmount = typeof conversionResult === 'number' ? conversionResult : conversionResult.convertedAmount;
+    
+    // Guardar en historial
+    if (currentEditId) {
+        // Si estamos editando, actualizar la entrada existente
+        let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+        const editIndex = history.findIndex(item => item.id === currentEditId);
+        if (editIndex !== -1) {
+            history[editIndex] = {
+                ...history[editIndex],
+                amount,
+                fromCurrency,
+                toCurrency,
+                result: finalAmount,
+                hasArgentineTaxes: shouldApplyArgentineTaxes,
+                isGaming,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Limpiar el estado de edición
+            currentEditId = null;
+            convertButton.textContent = 'Guardar conversión';
+            convertButton.classList.remove('editing');
+            cancelEditButton.style.display = 'none';
+            
+            localStorage.setItem('conversionHistory', JSON.stringify(history));
+            updateHistoryDisplay();
+            
+            // Mostrar confirmación de actualización
+            showSaveConfirmation('Actualizado ✓');
+            return;
+        }
+    } else {
+        // Agregar nueva entrada al historial
+        saveToHistory(amount, fromCurrency, toCurrency, finalAmount, shouldApplyArgentineTaxes, isGaming);
+    }
+    
+    // Mostrar confirmación temporal
+    showSaveConfirmation('Guardado ✓');
+    
+    console.log('💾 Conversión guardada en historial');
+}
+
+/**
+ * Función para mostrar confirmación de guardado
+ */
+function showSaveConfirmation(message) {
+    const originalText = convertButton.textContent;
+    const originalColor = convertButton.style.backgroundColor;
+    
+    convertButton.textContent = message;
+    convertButton.style.backgroundColor = '#27ae60';
+    convertButton.disabled = true;
+    
+    setTimeout(() => {
+        convertButton.textContent = originalText;
+        convertButton.style.backgroundColor = originalColor;
+        convertButton.disabled = false;
+    }, 1500);
+}
+
+/**
  * Función para reconvertir en tiempo real cuando cambia el checkbox de gaming
  */
 async function reconvertWithGamingState() {
@@ -530,7 +770,7 @@ async function reconvertWithGamingState() {
 }
 
 /**
- * Función para intercambiar monedas
+ * Función para intercambiar monedas (actualizada para tiempo real)
  */
 function swapCurrencies() {
     if (isLoading) return;
@@ -554,10 +794,12 @@ function swapCurrencies() {
         swapButton.classList.remove('swap-animation');
     }, 300);
     
-    // Si hay un resultado visible, reconvertir automáticamente
-    if (resultDiv.style.display === 'block' && amountInput.value && !isLoading) {
-        clearConversionState(); // Limpiar estado antes de nueva conversión después de swap
-        setTimeout(performConversion, 300); // Delay para que se vea la animación
+    // Si hay un valor en el input, reconvertir automáticamente en tiempo real
+    if (amountInput.value.trim()) {
+        clearConversionState();
+        setTimeout(() => {
+            performRealtimeConversion();
+        }, 300);
     }
 }
 
@@ -1106,22 +1348,26 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     // Event listeners para botones
-    convertButton.addEventListener('click', performConversion);
+    convertButton.addEventListener('click', saveConversion); // Cambiado a saveConversion
     cancelEditButton.addEventListener('click', cancelEdit);
     swapButton.addEventListener('click', swapCurrencies);
     
-    // Event listeners para cambios automáticos
+    // Event listeners para cambios automáticos en tiempo real
     fromCurrencySelect.addEventListener('change', function() {
         clearConversionState(); // Limpiar estado al cambiar moneda origen
-        if (amountInput.value && resultDiv.style.display === 'block' && !isLoading) {
-            performConversion();
+        updateFromFlag();
+        updateExchangeRateDisplay();
+        if (amountInput.value.trim()) {
+            performRealtimeConversion(); // Conversión en tiempo real
         }
     });
     
     toCurrencySelect.addEventListener('change', function() {
         clearConversionState(); // Limpiar estado al cambiar moneda destino
-        if (amountInput.value && resultDiv.style.display === 'block' && !isLoading) {
-            performConversion();
+        updateToFlag();
+        updateExchangeRateDisplay();
+        if (amountInput.value.trim()) {
+            performRealtimeConversion(); // Conversión en tiempo real
         }
     });
     
@@ -1129,17 +1375,27 @@ document.addEventListener('DOMContentLoaded', async function() {
     amountInput.addEventListener('input', validateNumericInput);
     amountInput.addEventListener('input', formatInput);
     
-    // Limpiar estado cuando se modifica el monto
+    // Event listener para conversión en tiempo real mientras se escribe
     amountInput.addEventListener('input', function() {
+        // Limpiar estado de conversión anterior
+        clearConversionState();
+        
+        // Si hay un valor válido, convertir en tiempo real con delay
         if (this.value.trim()) {
-            clearConversionState(); // Limpiar estado cuando se cambia el monto
+            clearTimeout(this.convertTimeout);
+            this.convertTimeout = setTimeout(() => {
+                performRealtimeConversion();
+            }, 300); // 300ms de delay para evitar muchas llamadas
+        } else {
+            // Si no hay valor, ocultar resultado
+            resultDiv.style.display = 'none';
         }
     });
     
-    // Event listener para conversión con Enter
+    // Event listener para guardar con Enter
     amountInput.addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            performConversion();
+        if (event.key === 'Enter' && lastConversionData) {
+            saveConversion(); // Guardar en lugar de convertir
         }
     });
     
@@ -1154,9 +1410,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Event listener para el checkbox de gaming (conversión en tiempo real)
     if (gamingCheckbox) {
         gamingCheckbox.addEventListener('change', function() {
-            // Solo reconvertir si hay un resultado visible y no estamos cargando
-            if (amountInput.value && resultDiv.style.display === 'block' && !isLoading) {
-                reconvertWithGamingState();
+            console.log('🎮 Checkbox de gaming cambió:', this.checked);
+            // Reconvertir en tiempo real si hay un valor en el input
+            if (amountInput.value.trim()) {
+                performRealtimeConversion(); // Reconversión en tiempo real
             }
         });
     }
