@@ -293,6 +293,192 @@ function startAutoUpdate(intervalMinutes = 10) {
     console.log(`⏰ Actualización automática configurada cada ${intervalMinutes} minutos`);
 }
 
+// ===== NEWS API CONFIGURATION =====
+
+// Configuración de la API de noticias
+const NEWS_API_BASE_URL = 'https://api.rss2json.com/v1/api.json';
+// URL RSS corregida de Ámbito Financiero
+const AMBITO_RSS_URL = 'https://www.ambito.com/rss/pages/finanzas.xml';
+
+// Cache para noticias
+let newsCache = {
+    data: [],
+    lastFetch: null,
+    maxAge: 10 * 60 * 1000 // 10 minutos en millisegundos
+};
+
+/**
+ * Función para obtener noticias financieras de Ámbito
+ * @returns {Promise<Array>} Array de noticias con los campos: title, link, description, thumbnail, pubDate, author
+ */
+async function fetchFinancialNews() {
+    try {
+        // Verificar si hay cache válido
+        const now = Date.now();
+        if (newsCache.data.length > 0 && 
+            newsCache.lastFetch && 
+            (now - newsCache.lastFetch) < newsCache.maxAge) {
+            console.log('📰 Noticias obtenidas desde cache');
+            return newsCache.data;
+        }
+
+        console.log('📰 Obteniendo noticias financieras de Ámbito...');
+        
+        // Usar la API sin API key (sin parámetro count)
+        const response = await fetch(`${NEWS_API_BASE_URL}?rss_url=${encodeURIComponent(AMBITO_RSS_URL)}`);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status !== 'ok') {
+            throw new Error(`Error en RSS2JSON: ${data.message || 'Error desconocido'}`);
+        }
+        
+        // Procesar y limpiar los datos de noticias
+        const processedNews = data.items.map(item => {
+            // Limpiar HTML del description
+            const cleanDescription = (item.description || '')
+                .replace(/<[^>]*>/g, '') // Remover tags HTML
+                .replace(/&nbsp;/g, ' ') // Reemplazar &nbsp;
+                .replace(/&amp;/g, '&') // Reemplazar &amp;
+                .replace(/&quot;/g, '"') // Reemplazar &quot;
+                .replace(/&apos;/g, "'") // Reemplazar &apos;
+                .replace(/&lt;/g, '<') // Reemplazar &lt;
+                .replace(/&gt;/g, '>') // Reemplazar &gt;
+                .trim();
+
+            // Extraer imagen thumbnail (si existe)
+            let thumbnail = item.thumbnail || item.enclosure?.link || null;
+            
+            // Si no hay thumbnail, buscar en el content
+            if (!thumbnail && item.content) {
+                const imgMatch = item.content.match(/<img[^>]+src="([^">]+)"/);
+                if (imgMatch) {
+                    thumbnail = imgMatch[1];
+                }
+            }
+
+            return {
+                title: item.title?.trim() || 'Sin título',
+                link: item.link || '#',
+                description: cleanDescription || 'Sin descripción disponible',
+                thumbnail: thumbnail,
+                pubDate: item.pubDate || new Date().toISOString(),
+                author: item.author || 'Ámbito Financiero',
+                guid: item.guid || item.link, // ID único para la noticia
+                categories: item.categories || []
+            };
+        });
+
+        // Actualizar cache
+        newsCache.data = processedNews;
+        newsCache.lastFetch = now;
+        
+        console.log(`📰 ${processedNews.length} noticias obtenidas exitosamente`);
+        return processedNews;
+        
+    } catch (error) {
+        console.error('❌ Error al obtener noticias:', error);
+        
+        // En caso de error, devolver cache si existe
+        if (newsCache.data.length > 0) {
+            console.log('📰 Devolviendo noticias desde cache debido a error');
+            return newsCache.data;
+        }
+        
+        // Si no hay cache, lanzar error para que no se muestren noticias
+        throw error;
+    }
+}
+
+/**
+ * Función para obtener una noticia específica por ID
+ * @param {string} guid - ID único de la noticia
+ * @returns {Object|null} Noticia encontrada o null
+ */
+function getNewsById(guid) {
+    return newsCache.data.find(news => news.guid === guid) || null;
+}
+
+/**
+ * Función para filtrar noticias por categoría
+ * @param {string} category - Categoría a filtrar
+ * @returns {Array} Noticias filtradas
+ */
+function getNewsByCategory(category) {
+    return newsCache.data.filter(news => 
+        news.categories.some(cat => 
+            cat.toLowerCase().includes(category.toLowerCase())
+        )
+    );
+}
+
+/**
+ * Función para buscar noticias por palabra clave
+ * @param {string} keyword - Palabra clave a buscar
+ * @returns {Array} Noticias que contienen la palabra clave
+ */
+function searchNews(keyword) {
+    const searchTerm = keyword.toLowerCase();
+    return newsCache.data.filter(news => 
+        news.title.toLowerCase().includes(searchTerm) ||
+        news.description.toLowerCase().includes(searchTerm)
+    );
+}
+
+/**
+ * Función para obtener las últimas N noticias
+ * @param {number} count - Número de noticias a obtener (default: 5)
+ * @returns {Array} Últimas noticias
+ */
+function getLatestNews(count = 5) {
+    return newsCache.data.slice(0, count);
+}
+
+/**
+ * Función para limpiar el cache de noticias
+ */
+function clearNewsCache() {
+    newsCache.data = [];
+    newsCache.lastFetch = null;
+    console.log('📰 Cache de noticias limpiado');
+}
+
+/**
+ * Función para formatear fecha de publicación
+ * @param {string} pubDate - Fecha en formato ISO
+ * @returns {string} Fecha formateada
+ */
+function formatNewsDate(pubDate) {
+    try {
+        const date = new Date(pubDate);
+        const now = new Date();
+        const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+        
+        if (diffInHours < 1) {
+            return 'Hace unos minutos';
+        } else if (diffInHours < 24) {
+            return `Hace ${diffInHours} hora${diffInHours !== 1 ? 's' : ''}`;
+        } else {
+            const diffInDays = Math.floor(diffInHours / 24);
+            if (diffInDays < 7) {
+                return `Hace ${diffInDays} día${diffInDays !== 1 ? 's' : ''}`;
+            } else {
+                return date.toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+        }
+    } catch (error) {
+        return 'Fecha no disponible';
+    }
+}
+
 // Exportar funciones para uso en otros archivos
 if (typeof window !== 'undefined') {
     // En el navegador, agregar al objeto global window
@@ -306,6 +492,17 @@ if (typeof window !== 'undefined') {
         getFlagUrl,
         getCurrencyInfo,
         startAutoUpdate
+    };
+
+    // Agregar funciones de noticias al objeto global
+    window.NewsAPI = {
+        fetchFinancialNews,
+        getNewsById,
+        getNewsByCategory,
+        searchNews,
+        getLatestNews,
+        clearNewsCache,
+        formatNewsDate
     };
 }
 
@@ -321,6 +518,14 @@ if (typeof module !== 'undefined' && module.exports) {
         getFlagUrl,
         getCurrencyInfo,
         startAutoUpdate,
-        currencies
+        currencies,
+        // News API functions
+        fetchFinancialNews,
+        getNewsById,
+        getNewsByCategory,
+        searchNews,
+        getLatestNews,
+        clearNewsCache,
+        formatNewsDate
     };
 }

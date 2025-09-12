@@ -961,3 +961,354 @@ window.addEventListener('resize', () => {
         console.log(`📱 Pantalla redimensionada: ${ITEMS_PER_PAGE} elementos por página`);
     }
 });
+
+// === FUNCIONALIDAD DE NOTICIAS CON SWIPER.JS ===
+
+// Variables globales para Swiper
+let swiperDesktop = null;
+let swiperMobile = null;
+let newsLoaded = false;
+
+/**
+ * Función para detectar si es móvil
+ */
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
+/**
+ * Función para inicializar Swiper según el dispositivo
+ */
+function initSwiper() {
+    // Verificar que Swiper esté disponible
+    if (typeof Swiper === 'undefined') {
+        console.error('❌ Swiper.js no está cargado');
+        return;
+    }
+    
+    console.log('🔄 Inicializando Swiper... Es móvil:', isMobile());
+    
+    // Destruir instancias existentes
+    if (swiperDesktop) {
+        swiperDesktop.destroy(true, true);
+        swiperDesktop = null;
+        console.log('🗑️ Swiper desktop destruido');
+    }
+    if (swiperMobile) {
+        swiperMobile.destroy(true, true);
+        swiperMobile = null;
+        console.log('🗑️ Swiper mobile destruido');
+    }
+    
+    try {
+        if (isMobile()) {
+            // Configuración para móvil - Effect Cards
+            const mobileElement = document.querySelector('#newsMobile');
+            console.log('📱 Elemento móvil encontrado:', !!mobileElement);
+            
+            if (mobileElement) {
+                swiperMobile = new Swiper('#newsMobile', {
+                    effect: 'cards',
+                    grabCursor: true,
+                    cardsEffect: {
+                        perSlideOffset: 12,
+                        perSlideRotate: 3,
+                        rotate: true,
+                        slideShadows: false,
+                    },
+                    loop: true,
+                    pagination: {
+                        el: '#newsMobile .swiper-pagination',
+                        clickable: true,
+                        dynamicBullets: true,
+                    },
+                    on: {
+                        init: function() {
+                            console.log('📱 Swiper móvil inicializado - solo navegación manual');
+                        }
+                    }
+                });
+            }
+        } else {
+            // Configuración para desktop - Una noticia a la vez con scroll
+            const desktopElement = document.querySelector('#newsDesktop');
+            console.log('🖥️ Elemento desktop encontrado:', !!desktopElement);
+            
+            if (desktopElement) {
+                swiperDesktop = new Swiper('#newsDesktop', {
+                    direction: 'vertical',
+                    slidesPerView: 1,
+                    spaceBetween: 30,
+                    centeredSlides: true,
+                    mousewheel: {
+                        enabled: true,
+                        sensitivity: 1,
+                        releaseOnEdges: true,
+                    },
+                    keyboard: {
+                        enabled: true,
+                        onlyInViewport: true,
+                    },
+                    loop: true,
+                    pagination: {
+                        el: '#newsDesktop .swiper-pagination',
+                        clickable: true,
+                        dynamicBullets: true,
+                    },
+                    effect: 'slide',
+                    speed: 600,
+                    on: {
+                        init: function() {
+                            console.log('🖱️ Swiper desktop inicializado - una noticia por vez, solo scroll manual');
+                        }
+                    }
+                });
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error al inicializar Swiper:', error);
+    }
+}
+
+/**
+ * Función para crear un slide de noticia
+ */
+function createNewsSlide(article) {
+    const publishDate = new Date(article.pubDate);
+    const now = new Date();
+    const diffTime = now - publishDate;
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    
+    let timeAgo;
+    if (diffHours < 1) {
+        timeAgo = 'Hace menos de 1 hora';
+    } else if (diffHours < 24) {
+        timeAgo = `Hace ${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
+    } else {
+        timeAgo = `Hace ${diffDays} día${diffDays !== 1 ? 's' : ''}`;
+    }
+    
+    // Limpiar y limitar la descripción
+    let description = article.description || article.content || '';
+    description = description.replace(/<[^>]*>/g, ''); // Remover HTML
+    description = description.length > 150 ? description.substring(0, 150) + '...' : description;
+    
+    // Imagen de la noticia (si está disponible)
+    const imageSection = article.thumbnail ? `
+        <div class="news-image">
+            <img src="${article.thumbnail}" alt="${article.title}" loading="lazy" onerror="this.parentElement.style.display='none'">
+        </div>
+    ` : '';
+    
+    // Autor (si está disponible y no es el predeterminado)
+    const author = article.author && article.author !== 'Ámbito Financiero' ? article.author : null;
+    const authorSection = author ? `
+        <span class="news-author">Por ${author}</span>
+    ` : '';
+    
+    return `
+        <div class="swiper-slide">
+            <div class="news-slide">
+                ${imageSection}
+                <div class="news-content">
+                    <h3 class="news-title">${article.title}</h3>
+                    <p class="news-description">${description}</p>
+                    <div class="news-meta">
+                        <div class="news-source-info">
+                            <span class="news-source">Ámbito Financiero</span>
+                            ${authorSection}
+                        </div>
+                        <span class="news-time">${timeAgo}</span>
+                    </div>
+                </div>
+                <div class="news-actions">
+                    <a href="${article.link}" target="_blank" rel="noopener noreferrer" class="news-link">
+                        Leer más
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M7 17L17 7"></path>
+                            <path d="M7 7h10v10"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Función para cargar y mostrar las noticias
+ */
+async function loadNews() {
+    if (newsLoaded) return;
+    
+    console.log('📰 Cargando noticias financieras...');
+    console.log('📰 NewsAPI disponible:', !!window.NewsAPI);
+    console.log('📰 fetchFinancialNews disponible:', !!(window.NewsAPI && window.NewsAPI.fetchFinancialNews));
+    
+    try {
+        // Intentar cargar noticias desde la API
+        const news = await window.NewsAPI.fetchFinancialNews();
+        console.log('📰 Respuesta de API recibida:', !!news, 'Cantidad:', news ? news.length : 0);
+        
+        if (!news || news.length === 0) {
+            throw new Error('No se pudieron cargar las noticias desde la API');
+        }
+        
+        // Tomar solo las primeras 10 noticias más recientes
+        const recentNews = news.slice(0, 10);
+        
+        // Crear slides para desktop
+        const desktopWrapper = document.querySelector('#newsWrapperDesktop');
+        if (desktopWrapper) {
+            desktopWrapper.innerHTML = recentNews.map(article => createNewsSlide(article)).join('');
+        }
+        
+        // Crear slides para móvil
+        const mobileWrapper = document.querySelector('#newsWrapperMobile');
+        if (mobileWrapper) {
+            mobileWrapper.innerHTML = recentNews.map(article => createNewsSlide(article)).join('');
+        }
+        
+        // Mostrar el contenedor de noticias
+        const newsContainer = document.querySelector('.news-container');
+        if (newsContainer) {
+            newsContainer.style.display = 'block';
+            console.log('✅ Contenedor de noticias mostrado');
+        } else {
+            console.error('❌ No se encontró el contenedor de noticias');
+        }
+        
+        console.log('📰 Slides creados - Desktop:', !!desktopWrapper, 'Mobile:', !!mobileWrapper);
+        console.log('📰 Noticias HTML generado:', recentNews.length, 'artículos');
+        
+        // Mostrar/ocultar contenedores según el dispositivo
+        const desktopContainer = document.querySelector('#newsDesktop');
+        const mobileContainer = document.querySelector('#newsMobile');
+        
+        if (desktopContainer && mobileContainer) {
+            if (isMobile()) {
+                desktopContainer.style.display = 'none';
+                mobileContainer.style.display = 'block';
+                console.log('📱 Configurando vista móvil');
+            } else {
+                desktopContainer.style.display = 'block';
+                mobileContainer.style.display = 'none';
+                console.log('🖥️ Configurando vista desktop');
+            }
+        }
+        
+        // Inicializar Swiper después de cargar el contenido
+        setTimeout(() => {
+            initSwiper();
+        }, 100);
+        
+        newsLoaded = true;
+        console.log(`✅ ${recentNews.length} noticias cargadas desde API`);
+        
+    } catch (error) {
+        console.warn('⚠️ Error al cargar noticias, ocultando sección de noticias:', error.message);
+        
+        // Ocultar completamente la sección de noticias si hay error
+        hideNewsSection();
+    }
+}
+
+/**
+ * Función para ocultar la sección de noticias cuando hay error en la API
+ */
+function hideNewsSection() {
+    console.log('� Ocultando sección de noticias debido a error en API');
+    
+    const newsContainer = document.querySelector('.news-container');
+    if (newsContainer) {
+        newsContainer.style.display = 'none';
+    }
+    
+    // También ajustar el layout para que el conversor ocupe todo el espacio
+    const mainLayout = document.querySelector('.main-layout');
+    const converterContainer = document.querySelector('.converter-container');
+    
+    if (mainLayout && converterContainer) {
+        // En desktop, centrar el conversor
+        if (!isMobile()) {
+            mainLayout.style.justifyContent = 'center';
+            converterContainer.style.maxWidth = '600px';
+        }
+    }
+    
+    newsLoaded = false; // Permitir intentar cargar de nuevo en el futuro
+}
+
+/**
+ * Función para actualizar Swiper según el tamaño de pantalla
+ */
+function updateSwiperForScreenSize() {
+    const currentIsMobile = isMobile();
+    
+    // Mostrar/ocultar contenedores según el dispositivo
+    const desktopContainer = document.querySelector('#newsDesktop');
+    const mobileContainer = document.querySelector('#newsMobile');
+    
+    if (desktopContainer && mobileContainer) {
+        if (currentIsMobile) {
+            desktopContainer.style.display = 'none';
+            mobileContainer.style.display = 'block';
+        } else {
+            desktopContainer.style.display = 'block';
+            mobileContainer.style.display = 'none';
+        }
+        
+        // Reinicializar Swiper para el nuevo tamaño
+        initSwiper();
+    }
+}
+
+// Event listener para cambios de tamaño de pantalla (incluyendo Swiper)
+window.addEventListener('resize', () => {
+    const newItemsPerPage = calculateItemsPerPage();
+    if (newItemsPerPage !== ITEMS_PER_PAGE) {
+        ITEMS_PER_PAGE = newItemsPerPage;
+        
+        // Ajustar la página actual si es necesario
+        const history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+        const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
+        
+        if (currentPage > totalPages) {
+            currentPage = totalPages || 1;
+        }
+        
+        updateHistoryDisplay();
+        console.log(`📱 Pantalla redimensionada: ${ITEMS_PER_PAGE} elementos por página`);
+    }
+    
+    // Actualizar Swiper para el nuevo tamaño de pantalla
+    if (newsLoaded) {
+        updateSwiperForScreenSize();
+    }
+});
+
+// Inicializar noticias cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar que todas las dependencias estén cargadas
+    const checkDependencies = () => {
+        if (typeof Swiper !== 'undefined') {
+            console.log('✅ Swiper.js cargado correctamente');
+            
+            // Verificar si NewsAPI está disponible
+            if (window.NewsAPI && typeof window.NewsAPI.fetchFinancialNews === 'function') {
+                console.log('✅ NewsAPI disponible, intentando cargar noticias...');
+                loadNews();
+            } else {
+                console.warn('⚠️ NewsAPI no disponible, ocultando sección de noticias...');
+                hideNewsSection();
+            }
+        } else {
+            console.warn('⚠️ Esperando que se cargue Swiper.js...');
+            setTimeout(checkDependencies, 500);
+        }
+    };
+    
+    // Empezar a verificar después de un pequeño delay
+    setTimeout(checkDependencies, 1000);
+});
