@@ -68,6 +68,20 @@
                 <button id="convertButton" class="convert-btn">Convertir</button>
                 <button id="cancelEditButton" class="cancel-btn" style="display: none;">Cancelar</button>
                 
+                <!-- Controles de impuestos argentinos -->
+                <div id="argentineTaxContainer" class="argentine-tax-container" style="display: none;">
+                    <div class="tax-info">
+                        <span class="tax-label">🇦🇷 Conversión con impuestos argentinos</span>
+                        <small class="tax-description">Se aplicarán IVA (21%) e Impuesto a las Ganancias (30%)</small>
+                    </div>
+                    <div class="gaming-checkbox-container">
+                        <label class="gaming-checkbox-label">
+                            <input type="checkbox" id="gamingCheckbox" class="gaming-checkbox">
+                            <span class="checkbox-text">🎮 Compra gaming (sin imp. ganancias)</span>
+                        </label>
+                    </div>
+                </div>
+                
                 <div id="result" class="result">
                     <span id="convertedAmount">0.00</span>
                 </div>

@@ -14,6 +14,8 @@ const closeMenu = document.getElementById('closeMenu');
 const historyList = document.getElementById('historyList');
 const themeToggle = document.getElementById('themeToggle');
 const exchangeRateValue = document.getElementById('exchangeRateValue');
+const gamingCheckbox = document.getElementById('gamingCheckbox');
+const argentineTaxContainer = document.getElementById('argentineTaxContainer');
 // Función para calcular items por página basado en el tamaño de pantalla
 function calculateItemsPerPage() {
     const width = window.innerWidth;
@@ -49,6 +51,8 @@ const paginationContainer = document.querySelector('.pagination');
 let isLoading = false;
 let isDarkMode = false;
 let currentEditId = null;
+let lastConversionData = null; // Para guardar la última conversión realizada
+let isReconvertingWithGaming = false; // Flag para indicar reconversión por cambio de gaming
 
 /**
  * Función para cargar las monedas en los selectores
@@ -159,8 +163,11 @@ async function updateExchangeRateDisplay() {
         // Obtener tasas actuales
         const rates = await window.CurrencyAPI.fetchExchangeRates('USD');
         
-        // Calcular el tipo de cambio entre las monedas seleccionadas
-        const exchangeRate = window.CurrencyAPI.convertCurrency(1, fromCurrency, toCurrency, rates);
+        // Calcular el tipo de cambio entre las monedas seleccionadas (sin impuestos para la visualización)
+        const exchangeRateResult = window.CurrencyAPI.convertCurrency(1, fromCurrency, toCurrency, rates, false, false);
+        
+        // Extraer el valor numérico del tipo de cambio
+        const exchangeRate = typeof exchangeRateResult === 'number' ? exchangeRateResult : exchangeRateResult.baseAmount;
         
         // Obtener símbolos de moneda si están disponibles
         const fromInfo = window.CurrencyAPI.getCurrencyInfo(fromCurrency);
@@ -205,6 +212,9 @@ function updateFromFlag() {
     
     // Actualizar tipo de cambio cuando cambia la moneda de origen
     updateExchangeRateDisplay();
+    
+    // Mostrar/ocultar controles de impuestos argentinos
+    updateArgentineTaxControls();
 }
 
 /**
@@ -223,6 +233,30 @@ function updateToFlag() {
     
     // Actualizar tipo de cambio cuando cambia la moneda de destino
     updateExchangeRateDisplay();
+    
+    // Mostrar/ocultar controles de impuestos argentinos
+    updateArgentineTaxControls();
+}
+
+/**
+ * Función para mostrar/ocultar los controles de impuestos argentinos
+ */
+function updateArgentineTaxControls() {
+    const fromCurrency = fromCurrencySelect.value;
+    const toCurrency = toCurrencySelect.value;
+    
+    // Mostrar controles solo si convertimos de USD o EUR a ARS
+    const shouldShowTaxControls = (fromCurrency === 'USD' || fromCurrency === 'EUR') && toCurrency === 'ARS';
+    
+    if (argentineTaxContainer) {
+        if (shouldShowTaxControls) {
+            argentineTaxContainer.style.display = 'block';
+            argentineTaxContainer.classList.add('tax-controls-visible');
+        } else {
+            argentineTaxContainer.style.display = 'none';
+            argentineTaxContainer.classList.remove('tax-controls-visible');
+        }
+    }
 }
 
 /**
@@ -230,10 +264,25 @@ function updateToFlag() {
  * @param {number} amount - Cantidad original
  * @param {string} fromCurrency - Moneda de origen
  * @param {string} toCurrency - Moneda de destino
- * @param {number} convertedAmount - Cantidad convertida
+ * @param {Object} conversionResult - Resultado de la conversión con impuestos
  */
-function displayResult(amount, fromCurrency, toCurrency, convertedAmount) {
-    const formattedAmount = convertedAmount.toLocaleString('es-ES', {
+function displayResult(amount, fromCurrency, toCurrency, conversionResult) {
+    // Si el resultado es un número simple (conversión sin impuestos)
+    let finalAmount, baseAmount, hasArgentineTaxes, taxBreakdown;
+    
+    if (typeof conversionResult === 'number') {
+        finalAmount = conversionResult;
+        baseAmount = conversionResult;
+        hasArgentineTaxes = false;
+        taxBreakdown = null;
+    } else {
+        finalAmount = conversionResult.convertedAmount;
+        baseAmount = conversionResult.baseAmount;
+        hasArgentineTaxes = conversionResult.hasArgentineTaxes;
+        taxBreakdown = conversionResult.breakdown;
+    }
+    
+    const formattedFinalAmount = finalAmount.toLocaleString('es-ES', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
@@ -243,7 +292,37 @@ function displayResult(amount, fromCurrency, toCurrency, convertedAmount) {
         maximumFractionDigits: 2
     });
     
-    convertedAmountSpan.textContent = `${originalFormatted} ${fromCurrency} = ${formattedAmount} ${toCurrency}`;
+    // Crear el texto principal del resultado
+    let resultText = `${originalFormatted} ${fromCurrency} = ${formattedFinalAmount} ${toCurrency}`;
+    
+    // Agregar desglose de impuestos si corresponde
+    if (hasArgentineTaxes && taxBreakdown) {
+        const baseFormatted = baseAmount.toLocaleString('es-ES', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        resultText += `\n\nDesglose:`;
+        resultText += `\nTipo de cambio: ${baseFormatted} ${toCurrency}`;
+        
+        if (taxBreakdown.taxes) {
+            Object.values(taxBreakdown.taxes).forEach(tax => {
+                if (tax.applied) {
+                    const taxAmountFormatted = tax.amount.toLocaleString('es-ES', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    resultText += `\n${tax.description}: +${taxAmountFormatted} ${toCurrency}`;
+                } else if (tax.exemptReason) {
+                    resultText += `\n${tax.description}: Exento (${tax.exemptReason})`;
+                }
+            });
+        }
+        
+        resultText += `\nTotal con impuestos: ${formattedFinalAmount} ${toCurrency}`;
+    }
+    
+    convertedAmountSpan.textContent = resultText;
     
     // Remover clases de estado anterior
     convertedAmountSpan.classList.remove('error-text');
@@ -256,6 +335,14 @@ function displayResult(amount, fromCurrency, toCurrency, convertedAmount) {
     setTimeout(() => {
         resultDiv.classList.remove('result-animation');
     }, 500);
+    
+    // Auto-limpiar el estado después de 1 segundo si no fue una reconversión por gaming
+    // Esto asegura que la próxima conversión siempre sea nueva
+    if (!isReconvertingWithGaming) {
+        setTimeout(() => {
+            clearConversionState();
+        }, 1000); // Reducido de 3 segundos a 1 segundo para restablecimiento más rápido
+    }
 }
 
 /**
@@ -324,25 +411,121 @@ async function performConversion() {
         // Obtener tasas de cambio actuales
         const rates = await window.CurrencyAPI.fetchExchangeRates('USD');
         
-        // Realizar conversión
-        const convertedAmount = window.CurrencyAPI.convertCurrency(
+    // Verificar si se deben aplicar impuestos argentinos
+    const shouldApplyArgentineTaxes = (fromCurrency === 'USD' || fromCurrency === 'EUR') && toCurrency === 'ARS';
+    const isGaming = gamingCheckbox ? gamingCheckbox.checked : false;
+    
+    // Verificar si es una nueva conversión diferente
+    const isNewConversion = !lastConversionData || 
+                           lastConversionData.amount !== amount ||
+                           lastConversionData.fromCurrency !== fromCurrency ||
+                           lastConversionData.toCurrency !== toCurrency;
+    
+    // Si es una nueva conversión, limpiar datos previos
+    if (isNewConversion) {
+        lastConversionData = null;
+    }        // Cargar impuestos argentinos si es necesario
+        if (shouldApplyArgentineTaxes) {
+            try {
+                await window.CurrencyAPI.fetchArgentineTaxes();
+            } catch (error) {
+                console.warn('⚠️ Error al cargar impuestos, usando valores por defecto');
+            }
+        }
+        
+        // Realizar conversión con o sin impuestos
+        const conversionResult = window.CurrencyAPI.convertCurrency(
             amount, 
             fromCurrency, 
             toCurrency, 
-            rates
+            rates,
+            shouldApplyArgentineTaxes,
+            isGaming
         );
         
+        // Guardar datos de la conversión actual
+        lastConversionData = {
+            amount,
+            fromCurrency,
+            toCurrency,
+            shouldApplyArgentineTaxes,
+            isGaming,
+            conversionResult,
+            rates
+        };
+        
         // Mostrar resultado
-        displayResult(amount, fromCurrency, toCurrency, convertedAmount);
+        displayResult(amount, fromCurrency, toCurrency, conversionResult);
+        
+        // Extraer el monto final para el historial
+        const finalAmount = typeof conversionResult === 'number' ? conversionResult : conversionResult.convertedAmount;
         
         // Agregar al historial
-        saveToHistory(amount, fromCurrency, toCurrency, convertedAmount);
+        saveToHistory(amount, fromCurrency, toCurrency, finalAmount, shouldApplyArgentineTaxes, isGaming);
+        
+        // Limpiar inmediatamente después de guardar para asegurar que la próxima sea nueva conversión
+        setTimeout(() => {
+            clearConversionState();
+        }, 500); // Pequeño delay para permitir cualquier reconversión inmediata por gaming
         
     } catch (error) {
         console.error('Error en la conversión:', error);
         showError(`Error: ${error.message}`);
     } finally {
         hideLoading();
+    }
+}
+
+/**
+ * Función para reconvertir en tiempo real cuando cambia el checkbox de gaming
+ */
+async function reconvertWithGamingState() {
+    if (!lastConversionData || isLoading) return;
+    
+    const { amount, fromCurrency, toCurrency, shouldApplyArgentineTaxes, rates } = lastConversionData;
+    const isGaming = gamingCheckbox ? gamingCheckbox.checked : false;
+    
+    try {
+        // Verificar si la conversión actual debe aplicar impuestos
+        if (!shouldApplyArgentineTaxes) {
+            return; // No hacer nada si no se aplican impuestos
+        }
+        
+        // Marcar que estamos reconvirtiendo por cambio de gaming
+        isReconvertingWithGaming = true;
+        
+        // Realizar nueva conversión con el estado actual del checkbox
+        const conversionResult = window.CurrencyAPI.convertCurrency(
+            amount, 
+            fromCurrency, 
+            toCurrency, 
+            rates,
+            shouldApplyArgentineTaxes,
+            isGaming
+        );
+        
+        // Actualizar datos guardados
+        lastConversionData.isGaming = isGaming;
+        lastConversionData.conversionResult = conversionResult;
+        
+        // Mostrar resultado actualizado
+        displayResult(amount, fromCurrency, toCurrency, conversionResult);
+        
+        // Extraer el monto final para actualizar el historial
+        const finalAmount = typeof conversionResult === 'number' ? conversionResult : conversionResult.convertedAmount;
+        
+        // Actualizar en el historial (reemplazar la última entrada si es la misma conversión)
+        updateLastHistoryEntry(amount, fromCurrency, toCurrency, finalAmount, shouldApplyArgentineTaxes, isGaming);
+        
+        // Limpiar inmediatamente después de actualizar para que la próxima sea nueva conversión
+        setTimeout(() => {
+            clearConversionState();
+        }, 50); // Delay muy corto para asegurar que la actualización se complete
+        
+    } catch (error) {
+        console.error('Error en la reconversión:', error);
+        // Limpiar el estado incluso si hay error
+        clearConversionState();
     }
 }
 
@@ -373,7 +556,22 @@ function swapCurrencies() {
     
     // Si hay un resultado visible, reconvertir automáticamente
     if (resultDiv.style.display === 'block' && amountInput.value && !isLoading) {
+        clearConversionState(); // Limpiar estado antes de nueva conversión después de swap
         setTimeout(performConversion, 300); // Delay para que se vea la animación
+    }
+}
+
+/**
+ * Función para limpiar el estado de conversión anterior
+ * Esto fuerza que la próxima conversión sea nueva en lugar de actualizar
+ */
+function clearConversionState() {
+    const wasCleared = lastConversionData !== null || isReconvertingWithGaming !== false;
+    lastConversionData = null;
+    isReconvertingWithGaming = false;
+    
+    if (wasCleared) {
+        console.log('🧹 Estado de conversión limpiado - próxima conversión será NUEVA entrada en historial');
     }
 }
 
@@ -584,20 +782,84 @@ function loadTheme() {
 }
 
 // Función para guardar en el historial
-function saveToHistory(amount, fromCurrency, toCurrency, result) {
+function saveToHistory(amount, fromCurrency, toCurrency, result, hasArgentineTaxes = false, isGaming = false) {
+    let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+    
+    // Si estamos editando una conversión existente, actualizarla
+    if (currentEditId) {
+        const editIndex = history.findIndex(item => item.id === currentEditId);
+        if (editIndex !== -1) {
+            // Actualizar la conversión existente
+            history[editIndex] = {
+                ...history[editIndex],
+                amount,
+                fromCurrency,
+                toCurrency,
+                result,
+                hasArgentineTaxes,
+                isGaming,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Limpiar el estado de edición y conversión después de actualizar
+            currentEditId = null;
+            lastConversionData = null;
+            isReconvertingWithGaming = false;
+            
+            // Restaurar el botón de convertir
+            convertButton.textContent = 'Convertir';
+            convertButton.classList.remove('editing');
+            cancelEditButton.style.display = 'none';
+            
+            localStorage.setItem('conversionHistory', JSON.stringify(history));
+            updateHistoryDisplay();
+            return;
+        }
+    }
+    
+    // Si no es una edición, crear nueva entrada
     const conversion = {
         id: Date.now(),
         amount,
         fromCurrency,
         toCurrency,
         result,
+        hasArgentineTaxes,
+        isGaming,
         timestamp: new Date().toISOString()
     };
 
-    let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
     history.unshift(conversion);
     localStorage.setItem('conversionHistory', JSON.stringify(history));
     updateHistoryDisplay();
+}
+
+// Función para actualizar la última entrada del historial
+function updateLastHistoryEntry(amount, fromCurrency, toCurrency, result, hasArgentineTaxes = false, isGaming = false) {
+    let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+    
+    // Solo actualizar la entrada existente si estamos reconvirtiendo por cambio de gaming
+    // y hay al menos una entrada con los mismos datos base
+    if (isReconvertingWithGaming && history.length > 0) {
+        const lastEntry = history[0];
+        if (lastEntry.amount === amount && 
+            lastEntry.fromCurrency === fromCurrency && 
+            lastEntry.toCurrency === toCurrency) {
+            
+            // Actualizar solo el resultado, impuestos y gaming de la entrada existente
+            lastEntry.result = result;
+            lastEntry.hasArgentineTaxes = hasArgentineTaxes;
+            lastEntry.isGaming = isGaming;
+            lastEntry.timestamp = new Date().toISOString();
+            
+            localStorage.setItem('conversionHistory', JSON.stringify(history));
+            updateHistoryDisplay();
+            return;
+        }
+    }
+    
+    // En cualquier otro caso, crear nueva entrada
+    saveToHistory(amount, fromCurrency, toCurrency, result, hasArgentineTaxes, isGaming);
 }
 
 // Función para actualizar el historial en el DOM
@@ -637,10 +899,21 @@ function updateHistoryDisplay() {
     currentItems.forEach(conversion => {
         const item = document.createElement('div');
         item.className = 'history-item';
+        
+        // Crear indicadores de impuestos si corresponde
+        let taxIndicators = '';
+        if (conversion.hasArgentineTaxes) {
+            taxIndicators = `<span class="tax-indicator" title="Conversión con impuestos argentinos">🇦🇷 c/impuestos</span>`;
+            if (conversion.isGaming) {
+                taxIndicators += ` <span class="gaming-indicator" title="Compra gaming - Sin imp. ganancias">🎮</span>`;
+            }
+        }
+        
         item.innerHTML = `
             <div class="conversion-details">
                 ${Number(conversion.amount).toFixed(2)} ${conversion.fromCurrency} = 
                 ${Number(conversion.result).toFixed(2)} ${conversion.toCurrency}
+                ${taxIndicators ? `<br>${taxIndicators}` : ''}
                 <br>
                 <small>${new Date(conversion.timestamp).toLocaleString()}</small>
             </div>
@@ -740,6 +1013,11 @@ function editConversion(id) {
         fromCurrencySelect.value = conversion.fromCurrency;
         toCurrencySelect.value = conversion.toCurrency;
         
+        // Configurar checkbox de gaming si corresponde
+        if (gamingCheckbox && conversion.hasArgentineTaxes) {
+            gamingCheckbox.checked = conversion.isGaming || false;
+        }
+        
         // Cambiar el texto y estilo del botón de convertir
         convertButton.textContent = 'Actualizar';
         convertButton.classList.add('editing');
@@ -771,86 +1049,14 @@ function cancelEdit() {
     // Ocultar el botón de cancelar
     cancelEditButton.style.display = 'none';
     
+    // Limpiar datos de conversión anterior para forzar nueva entrada
+    lastConversionData = null;
+    isReconvertingWithGaming = false;
+    
     // Limpiar el formulario
     clearForm();
     
     console.log('✅ Edición cancelada');
-}
-
-// Asegurar que performConversion maneje correctamente la edición
-async function performConversion() {
-    if (isLoading) return;
-
-    const amount = parseFloat(amountInput.value);
-    const fromCurrency = fromCurrencySelect.value;
-    const toCurrency = toCurrencySelect.value;
-
-    if (!amount || amount <= 0) {
-        showError('Por favor ingrese una cantidad válida');
-        return;
-    }
-
-    showLoading();
-
-    try {
-        const rates = await window.CurrencyAPI.fetchExchangeRates('USD');
-        const convertedAmount = window.CurrencyAPI.convertCurrency(
-            amount,
-            fromCurrency,
-            toCurrency,
-            rates
-        );
-
-        displayResult(amount, fromCurrency, toCurrency, convertedAmount);
-
-        if (currentEditId) {
-            // Actualizar conversión existente
-            let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
-            const index = history.findIndex(item => item.id === currentEditId);
-
-            if (index !== -1) {
-                history[index] = {
-                    id: currentEditId,
-                    amount,
-                    fromCurrency,
-                    toCurrency,
-                    result: convertedAmount,
-                    timestamp: new Date().toISOString()
-                };
-                localStorage.setItem('conversionHistory', JSON.stringify(history));
-
-                // Resetear estado de edición usando la función cancelEdit
-                currentEditId = null;
-                convertButton.textContent = 'Convertir';
-                convertButton.classList.remove('editing');
-                cancelEditButton.style.display = 'none';
-                
-                console.log('✅ Conversión actualizada exitosamente');
-            }
-        } else {
-            // Crear nueva conversión
-            const newConversion = {
-                id: Date.now(),
-                amount,
-                fromCurrency,
-                toCurrency,
-                result: convertedAmount,
-                timestamp: new Date().toISOString()
-            };
-
-            let history = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
-            history.unshift(newConversion);
-            localStorage.setItem('conversionHistory', JSON.stringify(history));
-        }
-
-        updateHistoryDisplay();
-
-    } catch (error) {
-        console.error('Error en la conversión:', error);
-        showError(`Error: ${error.message}`);
-    } finally {
-        hideLoading();
-    }
 }
 
 // Event Listeners y inicialización
@@ -873,9 +1079,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         await window.CurrencyAPI.fetchExchangeRates();
         console.log('✅ Tasas de cambio iniciales obtenidas');
         
+        // Cargar impuestos argentinos
+        try {
+            await window.CurrencyAPI.fetchArgentineTaxes();
+            console.log('✅ Impuestos argentinos cargados');
+        } catch (error) {
+            console.warn('⚠️ Error al cargar impuestos argentinos:', error);
+        }
+        
         // Actualizar tipo de cambio inicial
         await updateExchangeRateDisplay();
         console.log('✅ Tipo de cambio inicial mostrado');
+        
+        // Inicializar controles de impuestos argentinos
+        updateArgentineTaxControls();
         
         // Iniciar actualización automática
         window.CurrencyAPI.startAutoUpdate(10);
@@ -895,12 +1112,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Event listeners para cambios automáticos
     fromCurrencySelect.addEventListener('change', function() {
+        clearConversionState(); // Limpiar estado al cambiar moneda origen
         if (amountInput.value && resultDiv.style.display === 'block' && !isLoading) {
             performConversion();
         }
     });
     
     toCurrencySelect.addEventListener('change', function() {
+        clearConversionState(); // Limpiar estado al cambiar moneda destino
         if (amountInput.value && resultDiv.style.display === 'block' && !isLoading) {
             performConversion();
         }
@@ -909,6 +1128,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Event listeners para el input
     amountInput.addEventListener('input', validateNumericInput);
     amountInput.addEventListener('input', formatInput);
+    
+    // Limpiar estado cuando se modifica el monto
+    amountInput.addEventListener('input', function() {
+        if (this.value.trim()) {
+            clearConversionState(); // Limpiar estado cuando se cambia el monto
+        }
+    });
     
     // Event listener para conversión con Enter
     amountInput.addEventListener('keypress', function(event) {
@@ -921,8 +1147,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     amountInput.addEventListener('input', function() {
         if (!this.value.trim()) {
             resultDiv.style.display = 'none';
+            clearConversionState(); // Usar la función centralizada
         }
     });
+    
+    // Event listener para el checkbox de gaming (conversión en tiempo real)
+    if (gamingCheckbox) {
+        gamingCheckbox.addEventListener('change', function() {
+            // Solo reconvertir si hay un resultado visible y no estamos cargando
+            if (amountInput.value && resultDiv.style.display === 'block' && !isLoading) {
+                reconvertWithGamingState();
+            }
+        });
+    }
     
     // Event listeners para atajos de teclado
     document.addEventListener('keydown', handleKeyboardShortcuts);

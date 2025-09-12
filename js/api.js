@@ -174,12 +174,24 @@ async function fetchExchangeRates(baseCurrency = 'USD') {
  * @param {string} fromCurrency - Moneda de origen
  * @param {string} toCurrency - Moneda de destino
  * @param {Object} rates - Objeto con las tasas de cambio
- * @returns {number} - Cantidad convertida
+ * @param {boolean} applyArgentineTaxes - Si aplicar impuestos argentinos (solo para ARS a USD/EUR)
+ * @param {boolean} isGaming - Si es compra gaming (exime impuesto a las ganancias)
+ * @returns {Object} - Objeto con cantidad convertida, impuestos aplicados y desglose
  */
-function convertCurrency(amount, fromCurrency, toCurrency, rates) {
+function convertCurrency(amount, fromCurrency, toCurrency, rates, applyArgentineTaxes = false, isGaming = false) {
     // Si las monedas son iguales, no hay conversión
     if (fromCurrency === toCurrency) {
-        return amount;
+        return {
+            convertedAmount: amount,
+            baseAmount: amount,
+            taxes: {},
+            totalTaxes: 0,
+            breakdown: {
+                base: amount,
+                taxes: {},
+                total: amount
+            }
+        };
     }
     
     // Verificar que las tasas existen
@@ -187,30 +199,83 @@ function convertCurrency(amount, fromCurrency, toCurrency, rates) {
         throw new Error('No hay tasas de cambio disponibles');
     }
     
-    // Si la moneda base es USD, usamos directamente las tasas
+    let baseConvertedAmount = 0;
+    
+    // Realizar conversión base
     if (fromCurrency === 'USD') {
         if (!rates[toCurrency]) {
             throw new Error(`Tasa de cambio no disponible para ${toCurrency}`);
         }
-        return amount * rates[toCurrency];
-    }
-    
-    // Si convertimos a USD desde otra moneda
-    if (toCurrency === 'USD') {
+        baseConvertedAmount = amount * rates[toCurrency];
+    } else if (toCurrency === 'USD') {
         if (!rates[fromCurrency]) {
             throw new Error(`Tasa de cambio no disponible para ${fromCurrency}`);
         }
-        return amount / rates[fromCurrency];
+        baseConvertedAmount = amount / rates[fromCurrency];
+    } else {
+        // Para conversión entre dos monedas que no son USD
+        if (!rates[fromCurrency] || !rates[toCurrency]) {
+            throw new Error(`Tasas de cambio no disponibles para ${fromCurrency} o ${toCurrency}`);
+        }
+        const usdAmount = amount / rates[fromCurrency];
+        baseConvertedAmount = usdAmount * rates[toCurrency];
     }
     
-    // Para conversión entre dos monedas que no son USD
-    // Primero convertimos a USD, luego a la moneda objetivo
-    if (!rates[fromCurrency] || !rates[toCurrency]) {
-        throw new Error(`Tasas de cambio no disponibles para ${fromCurrency} o ${toCurrency}`);
+    // Aplicar impuestos argentinos si corresponde (solo USD/EUR a ARS)
+    let finalAmount = baseConvertedAmount;
+    let appliedTaxes = {};
+    let totalTaxes = 0;
+    
+    if (applyArgentineTaxes && (fromCurrency === 'USD' || fromCurrency === 'EUR') && toCurrency === 'ARS') {
+        const taxData = getCurrentTaxes();
+        if (taxData.length > 0) {
+            let taxMultiplier = 1;
+            
+            taxData.forEach(tax => {
+                const taxValue = parseFloat(tax.valor);
+                
+                // Aplicar IVA siempre
+                if (tax.impuesto.toLowerCase() === 'iva') {
+                    const taxAmount = baseConvertedAmount * taxValue;
+                    appliedTaxes.iva = {
+                        rate: taxValue,
+                        amount: taxAmount,
+                        description: 'IVA (21%)'
+                    };
+                    taxMultiplier += taxValue;
+                    totalTaxes += taxAmount;
+                }
+                
+                // Aplicar Ganancias solo si no es gaming
+                if (tax.impuesto.toLowerCase() === 'ganancias' && !isGaming) {
+                    const taxAmount = baseConvertedAmount * taxValue;
+                    appliedTaxes.ganancias = {
+                        rate: taxValue,
+                        amount: taxAmount,
+                        description: 'Impuesto a las Ganancias (30%)'
+                    };
+                    taxMultiplier += taxValue;
+                    totalTaxes += taxAmount;
+                }
+            });
+            
+            finalAmount = baseConvertedAmount * taxMultiplier;
+        }
     }
     
-    const usdAmount = amount / rates[fromCurrency];
-    return usdAmount * rates[toCurrency];
+    return {
+        convertedAmount: finalAmount,
+        baseAmount: baseConvertedAmount,
+        taxes: appliedTaxes,
+        totalTaxes: totalTaxes,
+        breakdown: {
+            base: baseConvertedAmount,
+            taxes: appliedTaxes,
+            total: finalAmount
+        },
+        hasArgentineTaxes: Object.keys(appliedTaxes).length > 0,
+        isGamingPurchase: isGaming
+    };
 }
 
 /**
@@ -275,6 +340,155 @@ function getCurrencyInfo(currencyCode) {
 }
 
 /**
+ * Función para obtener los impuestos argentinos actuales
+ * @returns {Promise<Array>} Array de impuestos con estructura {impuesto, valor}
+ */
+async function fetchArgentineTaxes() {
+    try {
+        // Verificar si hay cache válido
+        const now = Date.now();
+        if (taxCache.data.length > 0 && 
+            taxCache.lastFetch && 
+            (now - taxCache.lastFetch) < taxCache.maxAge) {
+            console.log('💰 Impuestos obtenidos desde cache');
+            return taxCache.data;
+        }
+
+        console.log('💰 Obteniendo impuestos argentinos...');
+        
+        const response = await fetch(TAX_API_URL);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!Array.isArray(data)) {
+            throw new Error('Formato de respuesta inválido');
+        }
+        
+        // Actualizar cache
+        taxCache.data = data;
+        taxCache.lastFetch = now;
+        
+        console.log(`💰 ${data.length} impuestos obtenidos exitosamente`);
+        return data;
+        
+    } catch (error) {
+        console.error('❌ Error al obtener impuestos:', error);
+        
+        // En caso de error, devolver cache si existe
+        if (taxCache.data.length > 0) {
+            console.log('💰 Devolviendo impuestos desde cache debido a error');
+            return taxCache.data;
+        }
+        
+        // Si no hay cache, devolver impuestos por defecto
+        console.warn('💰 Usando impuestos por defecto debido a error en API');
+        return [
+            { impuesto: 'iva', valor: '0.21' },
+            { impuesto: 'ganancias', valor: '0.30' }
+        ];
+    }
+}
+
+/**
+ * Función para obtener los impuestos actuales del cache
+ * @returns {Array} Array de impuestos
+ */
+function getCurrentTaxes() {
+    return taxCache.data;
+}
+
+/**
+ * Función para calcular el total de impuestos a aplicar
+ * @param {number} baseAmount - Monto base sin impuestos
+ * @param {boolean} isGaming - Si es compra gaming (exime ganancias)
+ * @returns {Object} Objeto con desglose de impuestos
+ */
+function calculateArgentineTaxes(baseAmount, isGaming = false) {
+    const taxes = getCurrentTaxes();
+    let totalTaxAmount = 0;
+    let appliedTaxes = {};
+    
+    taxes.forEach(tax => {
+        const taxValue = parseFloat(tax.valor);
+        
+        // Aplicar IVA siempre
+        if (tax.impuesto.toLowerCase() === 'iva') {
+            const taxAmount = baseAmount * taxValue;
+            appliedTaxes.iva = {
+                rate: taxValue,
+                amount: taxAmount,
+                description: 'IVA (21%)',
+                applied: true
+            };
+            totalTaxAmount += taxAmount;
+        }
+        
+        // Aplicar Ganancias solo si no es gaming
+        if (tax.impuesto.toLowerCase() === 'ganancias') {
+            const taxAmount = baseAmount * taxValue;
+            appliedTaxes.ganancias = {
+                rate: taxValue,
+                amount: taxAmount,
+                description: 'Imp. Ganancias (30%)',
+                applied: !isGaming,
+                exemptReason: isGaming ? 'Compra gaming' : null
+            };
+            
+            if (!isGaming) {
+                totalTaxAmount += taxAmount;
+            }
+        }
+    });
+    
+    return {
+        taxes: appliedTaxes,
+        totalTaxAmount: totalTaxAmount,
+        finalAmount: baseAmount + totalTaxAmount
+    };
+}
+
+/**
+ * Función para formatear el desglose de impuestos para mostrar
+ * @param {Object} taxBreakdown - Objeto con desglose de impuestos
+ * @param {string} currency - Moneda para formatear
+ * @returns {string} Texto formateado del desglose
+ */
+function formatTaxBreakdown(taxBreakdown, currency = 'USD') {
+    if (!taxBreakdown || Object.keys(taxBreakdown.taxes).length === 0) {
+        return '';
+    }
+    
+    let breakdown = [];
+    
+    Object.values(taxBreakdown.taxes).forEach(tax => {
+        if (tax.applied) {
+            breakdown.push(`${tax.description}: ${tax.amount.toFixed(2)} ${currency}`);
+        } else if (tax.exemptReason) {
+            breakdown.push(`${tax.description}: Exento (${tax.exemptReason})`);
+        }
+    });
+    
+    if (breakdown.length > 0) {
+        breakdown.push(`Total impuestos: ${taxBreakdown.totalTaxAmount.toFixed(2)} ${currency}`);
+    }
+    
+    return breakdown.join('\n');
+}
+
+/**
+ * Función para limpiar el cache de impuestos
+ */
+function clearTaxCache() {
+    taxCache.data = [];
+    taxCache.lastFetch = null;
+    console.log('💰 Cache de impuestos limpiado');
+}
+
+/**
  * Función para actualizar las tasas de cambio automáticamente
  * @param {number} intervalMinutes - Intervalo en minutos para actualizar (por defecto 10)
  */
@@ -299,6 +513,18 @@ function startAutoUpdate(intervalMinutes = 10) {
 const NEWS_API_BASE_URL = 'https://api.rss2json.com/v1/api.json';
 // URL RSS corregida de Ámbito Financiero
 const AMBITO_RSS_URL = 'https://www.ambito.com/rss/pages/finanzas.xml';
+
+// ===== TAX API CONFIGURATION =====
+
+// Configuración de la API de impuestos argentinos
+const TAX_API_URL = 'https://api.sheetbest.com/sheets/5807426e-7ffe-4fbf-bfc1-bb97d0713bf4';
+
+// Cache para impuestos
+let taxCache = {
+    data: [],
+    lastFetch: null,
+    maxAge: 60 * 60 * 1000 // 1 hora en millisegundos
+};
 
 // Cache para noticias
 let newsCache = {
@@ -491,7 +717,13 @@ if (typeof window !== 'undefined') {
         getCurrencyName,
         getFlagUrl,
         getCurrencyInfo,
-        startAutoUpdate
+        startAutoUpdate,
+        // Funciones de impuestos argentinos
+        fetchArgentineTaxes,
+        getCurrentTaxes,
+        calculateArgentineTaxes,
+        formatTaxBreakdown,
+        clearTaxCache
     };
 
     // Agregar funciones de noticias al objeto global
@@ -519,6 +751,12 @@ if (typeof module !== 'undefined' && module.exports) {
         getCurrencyInfo,
         startAutoUpdate,
         currencies,
+        // Tax API functions
+        fetchArgentineTaxes,
+        getCurrentTaxes,
+        calculateArgentineTaxes,
+        formatTaxBreakdown,
+        clearTaxCache,
         // News API functions
         fetchFinancialNews,
         getNewsById,

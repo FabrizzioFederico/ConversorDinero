@@ -662,6 +662,140 @@ h1 {
     transform: translateY(1px);
 }
 
+/* Controles de impuestos argentinos */
+.argentine-tax-container {
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    animation: slideDown 0.3s ease-out;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        0 2px 16px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transition: all var(--medium-transition);
+}
+
+[data-theme="dark"] .argentine-tax-container {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 2px 16px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(148, 163, 184, 0.1);
+}
+
+.tax-info {
+    text-align: center;
+    margin-bottom: 0.8rem;
+}
+
+.tax-label {
+    display: block;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+    font-family: 'Inter', sans-serif;
+    text-align: center;
+}
+
+[data-theme="dark"] .tax-label {
+    color: #e2e8f0;
+}
+
+.tax-description {
+    display: block;
+    font-size: 0.8rem;
+    color: #64748b;
+    line-height: 1.4;
+    font-family: 'Inter', sans-serif;
+    text-align: center;
+}
+
+[data-theme="dark"] .tax-description {
+    color: #94a3b8;
+}
+
+.gaming-checkbox-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.gaming-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #1976d2;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    transition: color var(--fast-transition);
+}
+
+[data-theme="dark"] .gaming-checkbox-label {
+    color: #64b5f6;
+}
+
+.gaming-checkbox-label:hover {
+    color: #1565c0;
+}
+
+[data-theme="dark"] .gaming-checkbox-label:hover {
+    color: #90caf9;
+}
+
+.gaming-checkbox {
+    margin-right: 0.5rem;
+    width: 16px;
+    height: 16px;
+    accent-color: #1976d2;
+    cursor: pointer;
+}
+
+.checkbox-text {
+    user-select: none;
+}
+
+/* Indicadores en el historial */
+.tax-indicator {
+    display: inline-block;
+    background: #4caf50;
+    color: white;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    margin-right: 0.3rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.gaming-indicator {
+    display: inline-block;
+    background: #ff9800;
+    color: white;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .result {
     text-align: center;
     font-size: 1.5rem;
