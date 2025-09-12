@@ -182,6 +182,8 @@ async function updateExchangeRateDisplay() {
  * Función para actualizar la bandera de la moneda de origen
  */
 function updateFromFlag() {
+    console.log('🏁 Actualizando bandera FROM:', fromCurrencySelect.value);
+    
     const flagElement = document.getElementById('fromFlag');
     const flagUrl = window.CurrencyAPI.getFlagUrl(fromCurrencySelect.value);
     const currencyInfo = window.CurrencyAPI.getCurrencyInfo(fromCurrencySelect.value);
@@ -190,6 +192,9 @@ function updateFromFlag() {
         flagElement.src = flagUrl;
         flagElement.alt = currencyInfo.name;
         flagElement.title = `${fromCurrencySelect.value} - ${currencyInfo.name}`;
+        console.log('✅ Bandera FROM actualizada:', fromCurrencySelect.value, flagUrl);
+    } else {
+        console.warn('⚠️ Error actualizando bandera FROM:', {flagElement: !!flagElement, flagUrl, currencyInfo});
     }
     
     // Actualizar tipo de cambio cuando cambia la moneda de origen
@@ -203,6 +208,8 @@ function updateFromFlag() {
  * Función para actualizar la bandera de la moneda de destino
  */
 function updateToFlag() {
+    console.log('🏁 Actualizando bandera TO:', toCurrencySelect.value);
+    
     const flagElement = document.getElementById('toFlag');
     const flagUrl = window.CurrencyAPI.getFlagUrl(toCurrencySelect.value);
     const currencyInfo = window.CurrencyAPI.getCurrencyInfo(toCurrencySelect.value);
@@ -211,6 +218,9 @@ function updateToFlag() {
         flagElement.src = flagUrl;
         flagElement.alt = currencyInfo.name;
         flagElement.title = `${toCurrencySelect.value} - ${currencyInfo.name}`;
+        console.log('✅ Bandera TO actualizada:', toCurrencySelect.value, flagUrl);
+    } else {
+        console.warn('⚠️ Error actualizando bandera TO:', {flagElement: !!flagElement, flagUrl, currencyInfo});
     }
     
     // Actualizar tipo de cambio cuando cambia la moneda de destino
@@ -886,10 +896,26 @@ function loadLastConversion() {
  * Función para limpiar el formulario
  */
 function clearForm() {
+    console.log('🧹 Limpiando formulario...');
+    
     amountInput.value = '';
     resultDiv.style.display = 'none';
     fromCurrencySelect.value = 'USD';
     toCurrencySelect.value = 'EUR';
+    
+    console.log('🔄 Valores establecidos - FROM:', fromCurrencySelect.value, 'TO:', toCurrencySelect.value);
+    
+    // Actualizar banderas después de cambiar los valores
+    updateFromFlag();
+    updateToFlag();
+    
+    // Actualizar tipo de cambio
+    updateExchangeRateDisplay();
+    
+    // Actualizar controles de impuestos argentinos
+    updateArgentineTaxControls();
+    
+    console.log('✅ Formulario limpiado - banderas y UI actualizadas');
 }
 
 /**
@@ -1258,11 +1284,13 @@ function editConversion(id) {
 
 // Nueva función para cancelar la edición
 function cancelEdit() {
+    console.log('🔄 Iniciando cancelEdit()');
+    
     // Resetear el estado de edición
     currentEditId = null;
     
     // Restaurar el botón de convertir
-    convertButton.textContent = 'Convertir';
+    convertButton.textContent = 'Guardar conversión';
     convertButton.classList.remove('editing');
     
     // Ocultar el botón de cancelar
@@ -1272,10 +1300,10 @@ function cancelEdit() {
     lastConversionData = null;
     isReconvertingWithGaming = false;
     
-    // Limpiar el formulario
+    // Limpiar el formulario (esto ya incluye la actualización de banderas)
     clearForm();
     
-    console.log('✅ Edición cancelada');
+    console.log('✅ Edición cancelada - formulario limpiado y banderas actualizadas');
 }
 
 // Event Listeners y inicialización
