@@ -9,6 +9,29 @@
     <link rel="stylesheet" href="css/style.css">
     <!-- Swiper.js CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    
+    <!-- Script para cargar tema inmediatamente y evitar flash -->
+    <script>
+        (function() {
+            // Deshabilitar transiciones temporalmente
+            document.documentElement.style.setProperty('--theme-transition-duration', '0s');
+            
+            // Cargar tema guardado inmediatamente
+            const savedTheme = localStorage.getItem('darkMode');
+            if (savedTheme === 'true') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+            
+            // Restaurar transiciones después de que se cargue la página
+            window.addEventListener('load', function() {
+                requestAnimationFrame(function() {
+                    document.documentElement.style.setProperty('--theme-transition-duration', '0.5s');
+                });
+            });
+        })();
+    </script>
 </head>
 <body>
     <!-- Agregar antes del div.container -->
@@ -93,7 +116,7 @@
         </div>
 
         <!-- News Container -->
-        <div class="news-container news-swiper-desktop news-swiper-mobile">
+        <div class="news-container news-swiper-desktop news-swiper-mobile news-hidden">
             <h2 class="news-title">Noticias Financieras</h2>
             
             <!-- Desktop Swiper (Mousewheel) -->

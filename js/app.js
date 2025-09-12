@@ -990,25 +990,18 @@ function toggleTheme() {
 function loadTheme() {
     const savedTheme = localStorage.getItem('darkMode');
     
-    // Aplicar tema sin transición al cargar para evitar flash
-    document.documentElement.style.setProperty('--theme-transition-duration', '0s');
-    
+    // El tema ya se aplicó en el head, solo actualizar variables y UI
     if (savedTheme === 'true') {
         isDarkMode = true;
-        document.documentElement.setAttribute('data-theme', 'dark');
-        themeToggle.querySelector('.theme-icon').textContent = '☀️';
+        if (themeToggle && themeToggle.querySelector('.theme-icon')) {
+            themeToggle.querySelector('.theme-icon').textContent = '☀️';
+        }
     } else {
         isDarkMode = false;
-        document.documentElement.removeAttribute('data-theme');
-        themeToggle.querySelector('.theme-icon').textContent = '🌙';
+        if (themeToggle && themeToggle.querySelector('.theme-icon')) {
+            themeToggle.querySelector('.theme-icon').textContent = '🌙';
+        }
     }
-    
-    // Restaurar transiciones suaves después de la carga inicial
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            document.documentElement.style.removeProperty('--theme-transition-duration');
-        });
-    });
     
     console.log(`🎨 Tema cargado: ${isDarkMode ? 'Oscuro' : 'Claro'}`);
 }
@@ -1288,6 +1281,12 @@ function cancelEdit() {
 // Event Listeners y inicialización
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Iniciando Conversor de Moneda...');
+    
+    // Establecer estado inicial del layout (conversor centrado, noticias no cargadas)
+    const mainLayout = document.querySelector('.main-layout');
+    if (mainLayout) {
+        mainLayout.classList.add('news-loading');
+    }
     
     // Calcular items por página para la pantalla actual
     ITEMS_PER_PAGE = calculateItemsPerPage();
@@ -1648,11 +1647,35 @@ async function loadNews() {
             mobileWrapper.innerHTML = recentNews.map(article => createNewsSlide(article)).join('');
         }
         
-        // Mostrar el contenedor de noticias
+        // Mostrar el contenedor de noticias con animación fluida en desktop
         const newsContainer = document.querySelector('.news-container');
+        const mainLayout = document.querySelector('.main-layout');
+        
         if (newsContainer) {
-            newsContainer.style.display = 'block';
-            console.log('✅ Contenedor de noticias mostrado');
+            // Remover la clase de ocultación inicial
+            newsContainer.classList.remove('news-hidden');
+            
+            // Cambiar estado del layout para activar animación del conversor
+            if (mainLayout) {
+                mainLayout.classList.remove('news-loading');
+                mainLayout.classList.add('news-loaded');
+            }
+            
+            // Agregar animación fluida solo para desktop
+            if (!isMobile()) {
+                // Establecer estado loading inmediatamente para evitar flash
+                newsContainer.classList.add('loading');
+                
+                // Animar el contenedor después de un breve delay
+                setTimeout(() => {
+                    newsContainer.classList.remove('loading');
+                    newsContainer.classList.add('fade-in');
+                }, 300); // Delay para permitir que el contenido se cargue
+            } else {
+                // En móvil, mostrar normalmente sin animación usando clase ready
+                newsContainer.classList.add('ready');
+            }
+            console.log('✅ Contenedor de noticias mostrado y layout animado');
         } else {
             console.error('❌ No se encontró el contenedor de noticias');
         }
@@ -1699,12 +1722,21 @@ function hideNewsSection() {
     console.log('� Ocultando sección de noticias debido a error en API');
     
     const newsContainer = document.querySelector('.news-container');
+    const mainLayout = document.querySelector('.main-layout');
+    
     if (newsContainer) {
-        newsContainer.style.display = 'none';
+        // Remover todas las clases de animación y agregar clase de ocultación
+        newsContainer.classList.remove('loading', 'fade-in', 'ready');
+        newsContainer.classList.add('news-hidden');
+    }
+    
+    // Restaurar estado de layout centrado
+    if (mainLayout) {
+        mainLayout.classList.remove('news-loaded');
+        mainLayout.classList.add('news-loading');
     }
     
     // También ajustar el layout para que el conversor ocupe todo el espacio
-    const mainLayout = document.querySelector('.main-layout');
     const converterContainer = document.querySelector('.converter-container');
     
     if (mainLayout && converterContainer) {

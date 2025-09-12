@@ -63,6 +63,21 @@ body.no-scroll {
     justify-content: center;
     flex-direction: row; /* Por defecto horizontal para desktop */
     min-height: 550px; /* Altura mínima para mantener consistencia */
+    /* Transiciones suaves para cambios de layout */
+    transition: 
+        gap 0.8s cubic-bezier(0.4, 0.0, 0.2, 1),
+        justify-content 0.8s cubic-bezier(0.4, 0.0, 0.2, 1),
+        align-items 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Estado inicial cuando no hay noticias cargadas */
+.main-layout.news-loading {
+    justify-content: center; /* Conversor centrado cuando no hay noticias */
+}
+
+/* Estado final cuando las noticias están cargadas */
+.main-layout.news-loaded {
+    justify-content: space-between; /* Distribución normal con noticias */
 }
 
 .converter-container {
@@ -71,6 +86,10 @@ body.no-scroll {
     display: flex;
     flex-direction: column;
     justify-content: flex-start; /* Comenzar desde arriba pero manteniendo alineación central con news */
+    /* Transiciones suaves para el desplazamiento del conversor */
+    transition: 
+        transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1),
+        margin 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .news-container {
@@ -93,8 +112,15 @@ body.no-scroll {
         border-color var(--theme-transition-duration) var(--theme-transition-easing),
         box-shadow var(--theme-transition-duration) var(--theme-transition-easing);
     overflow: hidden; /* Evita scroll adicional */
-    display: flex;
+    display: none; /* Oculto por defecto para evitar flash en hard refresh */
     flex-direction: column; /* Para organizar el contenido internamente */
+}
+
+/* Estado inicial completamente oculto */
+.news-container.news-hidden {
+    display: none !important;
+    opacity: 0;
+    visibility: hidden;
 }
 
 /* Ocultar sección de noticias cuando hay error en API */
@@ -150,6 +176,30 @@ body.no-scroll {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+/* Animaciones para aparición fluida del contenedor de noticias en desktop */
+.news-container.loading {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+    transition: none;
+    display: flex !important; /* Forzar flexbox cuando está en modo loading */
+}
+
+.news-container.ready {
+    display: flex; /* Estado visible sin animación para móvil */
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: none;
+}
+
+.news-container.fade-in {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    display: flex !important; /* Forzar flexbox durante la animación */
+    transition: 
+        opacity 0.8s cubic-bezier(0.4, 0.0, 0.2, 1),
+        transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 /* Swiper actual containers */
