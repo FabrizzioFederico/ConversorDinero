@@ -1663,21 +1663,25 @@ async function loadNews() {
                 mainLayout.classList.add('converter-ready');
             }
             
-            // Agregar animación fluida solo para desktop
+            // Agregar animación fluida tanto para desktop como para móvil
             if (!isMobile()) {
-                // Establecer estado loading inmediatamente para evitar flash
+                // Desktop: animación desde la izquierda
                 newsContainer.classList.add('loading');
                 
-                // Animar el contenedor de noticias independientemente del conversor
                 setTimeout(() => {
                     newsContainer.classList.remove('loading');
                     newsContainer.classList.add('fade-in');
-                }, 100); // Delay muy corto ya que el conversor no espera
+                }, 100);
             } else {
-                // En móvil, mostrar normalmente sin animación usando clase ready
-                newsContainer.classList.add('ready');
+                // Móvil: animación desde abajo con delay suave
+                newsContainer.classList.add('loading');
+                
+                setTimeout(() => {
+                    newsContainer.classList.remove('loading');
+                    newsContainer.classList.add('ready');
+                }, 200); // Delay ligeramente mayor para móvil
             }
-            console.log('✅ Contenedor de noticias mostrado - conversor ya estaba visible');
+            console.log('✅ Contenedor de noticias mostrado con animación -', isMobile() ? 'móvil' : 'desktop');
         } else {
             console.error('❌ No se encontró el contenedor de noticias');
         }
