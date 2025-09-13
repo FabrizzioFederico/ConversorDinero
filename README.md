@@ -1,4 +1,4 @@
-# 💱 Conversor de Dinero
+# 💱 F&M Rates (Conversor de Dinero)
 
 Una aplicación web moderna para conversión de monedas en tiempo real con cálculo de impuestos argentinos, diseño glassmorphism y funcionalidades avanzadas.
 
