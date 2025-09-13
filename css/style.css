@@ -1829,6 +1829,10 @@ html.theme-changing body {
     animation: slideOutToBottom 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
 }
 
+.result-hide-animation {
+    animation: slideOutToBottom 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
 .result-update {
     animation: pulseUpdate 0.3s ease-in-out;
 }

@@ -372,6 +372,35 @@ function hideLoading() {
 }
 
 /**
+ * Función para ocultar el resultado con animación suave
+ */
+function hideResultWithAnimation() {
+    if (resultDiv.style.display === 'none') {
+        return; // Ya está oculto
+    }
+    
+    console.log('🎭 Ocultando resultado con animación');
+    
+    // Agregar clase de animación de salida
+    resultDiv.classList.add('result-hide-animation');
+    
+    // Después de la animación, ocultar completamente
+    setTimeout(() => {
+        resultDiv.style.display = 'none';
+        resultDiv.classList.remove('result-hide-animation');
+        console.log('✅ Resultado oculto completamente');
+    }, 600); // Duración aumentada para animación más suave
+}
+
+/**
+ * Función para ocultar el resultado inmediatamente (sin animación)
+ */
+function hideResultImmediately() {
+    resultDiv.style.display = 'none';
+    resultDiv.classList.remove('result-hide-animation', 'result-animation', 'result-slide-in', 'result-slide-out');
+}
+
+/**
  * Función principal de conversión
  */
 async function performConversion() {
@@ -899,7 +928,7 @@ function clearForm() {
     console.log('🧹 Limpiando formulario...');
     
     amountInput.value = '';
-    resultDiv.style.display = 'none';
+    hideResultImmediately(); // Usar función inmediata para limpiar
     fromCurrencySelect.value = 'USD';
     toCurrencySelect.value = 'EUR';
     
@@ -1398,8 +1427,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 performRealtimeConversion();
             }, 300); // 300ms de delay para evitar muchas llamadas
         } else {
-            // Si no hay valor, ocultar resultado
-            resultDiv.style.display = 'none';
+            // Si no hay valor, ocultar resultado con animación
+            hideResultWithAnimation();
         }
     });
     
@@ -1413,7 +1442,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Event listener para limpiar resultado cuando se borra el input
     amountInput.addEventListener('input', function() {
         if (!this.value.trim()) {
-            resultDiv.style.display = 'none';
+            hideResultWithAnimation();
             clearConversionState(); // Usar la función centralizada
         }
     });
