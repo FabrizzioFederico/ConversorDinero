@@ -442,14 +442,7 @@ async function performConversion() {
     // Si es una nueva conversión, limpiar datos previos
     if (isNewConversion) {
         lastConversionData = null;
-    }        // Cargar impuestos argentinos si es necesario
-        if (shouldApplyArgentineTaxes) {
-            try {
-                await window.CurrencyAPI.fetchArgentineTaxes();
-            } catch (error) {
-                console.warn('⚠️ Error al cargar impuestos, usando valores por defecto');
-            }
-        }
+    }
         
         // Realizar conversión con o sin impuestos
         const conversionResult = window.CurrencyAPI.convertCurrency(
@@ -521,14 +514,7 @@ async function performRealtimeConversion() {
         const shouldApplyArgentineTaxes = (fromCurrency === 'USD' || fromCurrency === 'EUR') && toCurrency === 'ARS';
         const isGaming = gamingCheckbox ? gamingCheckbox.checked : false;
         
-        // Cargar impuestos argentinos si es necesario
-        if (shouldApplyArgentineTaxes) {
-            try {
-                await window.CurrencyAPI.fetchArgentineTaxes();
-            } catch (error) {
-                console.warn('⚠️ Error al cargar impuestos, usando valores por defecto');
-            }
-        }
+        console.log('🔄 Conversión en tiempo real - Gaming:', isGaming, 'Impuestos argentinos:', shouldApplyArgentineTaxes);
         
         // Realizar conversión con o sin impuestos
         const conversionResult = window.CurrencyAPI.convertCurrency(
@@ -539,6 +525,8 @@ async function performRealtimeConversion() {
             shouldApplyArgentineTaxes,
             isGaming
         );
+        
+        console.log('💰 Resultado conversión:', conversionResult);
         
         // Guardar datos de la conversión actual para posible guardado
         lastConversionData = {
@@ -746,9 +734,12 @@ async function reconvertWithGamingState() {
     const { amount, fromCurrency, toCurrency, shouldApplyArgentineTaxes, rates } = lastConversionData;
     const isGaming = gamingCheckbox ? gamingCheckbox.checked : false;
     
+    console.log('🎮 Reconvirtiendo con gaming - isGaming:', isGaming, 'shouldApplyArgentineTaxes:', shouldApplyArgentineTaxes);
+    
     try {
         // Verificar si la conversión actual debe aplicar impuestos
         if (!shouldApplyArgentineTaxes) {
+            console.log('⚠️ No se aplican impuestos argentinos, saliendo...');
             return; // No hacer nada si no se aplican impuestos
         }
         
@@ -764,6 +755,8 @@ async function reconvertWithGamingState() {
             shouldApplyArgentineTaxes,
             isGaming
         );
+        
+        console.log('💰 Resultado reconversión con gaming:', conversionResult);
         
         // Actualizar datos guardados
         lastConversionData.isGaming = isGaming;
@@ -1361,14 +1354,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         await window.CurrencyAPI.fetchExchangeRates();
         console.log('✅ Tasas de cambio iniciales obtenidas');
         
-        // Cargar impuestos argentinos
-        try {
-            await window.CurrencyAPI.fetchArgentineTaxes();
-            console.log('✅ Impuestos argentinos cargados');
-        } catch (error) {
-            console.warn('⚠️ Error al cargar impuestos argentinos:', error);
-        }
-        
         // Actualizar tipo de cambio inicial
         await updateExchangeRateDisplay();
         console.log('✅ Tipo de cambio inicial mostrado');
@@ -1449,11 +1434,33 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Event listener para el checkbox de gaming (conversión en tiempo real)
     if (gamingCheckbox) {
-        gamingCheckbox.addEventListener('change', function() {
+        gamingCheckbox.addEventListener('change', async function() {
             console.log('🎮 Checkbox de gaming cambió:', this.checked);
-            // Reconvertir en tiempo real si hay un valor en el input
+            
+            // Si hay un valor en el input, reconvertir
             if (amountInput.value.trim()) {
-                performRealtimeConversion(); // Reconversión en tiempo real
+                const amount = parseFloat(amountInput.value);
+                const fromCurrency = fromCurrencySelect.value;
+                const toCurrency = toCurrencySelect.value;
+                
+                // Verificar si debe aplicar impuestos argentinos
+                const shouldApplyArgentineTaxes = (fromCurrency === 'USD' || fromCurrency === 'EUR') && toCurrency === 'ARS';
+                
+                if (shouldApplyArgentineTaxes) {
+                    // Si hay lastConversionData, usar reconvertWithGamingState
+                    if (lastConversionData && 
+                        lastConversionData.amount === amount &&
+                        lastConversionData.fromCurrency === fromCurrency &&
+                        lastConversionData.toCurrency === toCurrency) {
+                        await reconvertWithGamingState();
+                    } else {
+                        // Si no hay datos previos, hacer conversión normal en tiempo real
+                        await performRealtimeConversion();
+                    }
+                } else {
+                    // Si no aplica impuestos argentinos, solo hacer conversión en tiempo real
+                    await performRealtimeConversion();
+                }
             }
         });
     }

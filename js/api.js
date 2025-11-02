@@ -340,65 +340,11 @@ function getCurrencyInfo(currencyCode) {
 }
 
 /**
- * Función para obtener los impuestos argentinos actuales
- * @returns {Promise<Array>} Array de impuestos con estructura {impuesto, valor}
- */
-async function fetchArgentineTaxes() {
-    try {
-        // Verificar si hay cache válido
-        const now = Date.now();
-        if (taxCache.data.length > 0 && 
-            taxCache.lastFetch && 
-            (now - taxCache.lastFetch) < taxCache.maxAge) {
-            console.log('💰 Impuestos obtenidos desde cache');
-            return taxCache.data;
-        }
-
-        console.log('💰 Obteniendo impuestos argentinos...');
-        
-        const response = await fetch(TAX_API_URL);
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (!Array.isArray(data)) {
-            throw new Error('Formato de respuesta inválido');
-        }
-        
-        // Actualizar cache
-        taxCache.data = data;
-        taxCache.lastFetch = now;
-        
-        console.log(`💰 ${data.length} impuestos obtenidos exitosamente`);
-        return data;
-        
-    } catch (error) {
-        console.error('❌ Error al obtener impuestos:', error);
-        
-        // En caso de error, devolver cache si existe
-        if (taxCache.data.length > 0) {
-            console.log('💰 Devolviendo impuestos desde cache debido a error');
-            return taxCache.data;
-        }
-        
-        // Si no hay cache, devolver impuestos por defecto
-        console.warn('💰 Usando impuestos por defecto debido a error en API');
-        return [
-            { impuesto: 'iva', valor: '0.21' },
-            { impuesto: 'ganancias', valor: '0.30' }
-        ];
-    }
-}
-
-/**
- * Función para obtener los impuestos actuales del cache
- * @returns {Array} Array de impuestos
+ * Función para obtener los impuestos argentinos actuales (estáticos)
+ * @returns {Array} Array de impuestos con estructura {impuesto, valor}
  */
 function getCurrentTaxes() {
-    return taxCache.data;
+    return ARGENTINE_TAXES;
 }
 
 /**
@@ -480,15 +426,6 @@ function formatTaxBreakdown(taxBreakdown, currency = 'USD') {
 }
 
 /**
- * Función para limpiar el cache de impuestos
- */
-function clearTaxCache() {
-    taxCache.data = [];
-    taxCache.lastFetch = null;
-    console.log('💰 Cache de impuestos limpiado');
-}
-
-/**
  * Función para actualizar las tasas de cambio automáticamente
  * @param {number} intervalMinutes - Intervalo en minutos para actualizar (por defecto 10)
  */
@@ -514,17 +451,13 @@ const NEWS_API_BASE_URL = 'https://api.rss2json.com/v1/api.json';
 // URL RSS corregida de Ámbito Financiero
 const AMBITO_RSS_URL = 'https://www.ambito.com/rss/pages/finanzas.xml';
 
-// ===== TAX API CONFIGURATION =====
+// ===== TAX CONFIGURATION =====
 
-// Configuración de la API de impuestos argentinos
-const TAX_API_URL = 'https://api.sheetbest.com/sheets/5807426e-7ffe-4fbf-bfc1-bb97d0713bf4';
-
-// Cache para impuestos
-let taxCache = {
-    data: [],
-    lastFetch: null,
-    maxAge: 60 * 60 * 1000 // 1 hora en millisegundos
-};
+// Impuestos argentinos estáticos
+const ARGENTINE_TAXES = [
+    { impuesto: 'iva', valor: '0.21' },        // 21%
+    { impuesto: 'ganancias', valor: '0.30' }   // 30%
+];
 
 // Cache para noticias
 let newsCache = {
@@ -719,11 +652,9 @@ if (typeof window !== 'undefined') {
         getCurrencyInfo,
         startAutoUpdate,
         // Funciones de impuestos argentinos
-        fetchArgentineTaxes,
         getCurrentTaxes,
         calculateArgentineTaxes,
-        formatTaxBreakdown,
-        clearTaxCache
+        formatTaxBreakdown
     };
 
     // Agregar funciones de noticias al objeto global
@@ -751,12 +682,10 @@ if (typeof module !== 'undefined' && module.exports) {
         getCurrencyInfo,
         startAutoUpdate,
         currencies,
-        // Tax API functions
-        fetchArgentineTaxes,
+        // Tax functions
         getCurrentTaxes,
         calculateArgentineTaxes,
         formatTaxBreakdown,
-        clearTaxCache,
         // News API functions
         fetchFinancialNews,
         getNewsById,
