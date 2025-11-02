@@ -1501,8 +1501,8 @@ html.theme-changing body {
 }
 
 .export-btn-small {
-    background: rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.3);
+    background: rgba(102, 126, 234, 0.2);
+    border: 1px solid rgba(102, 126, 234, 0.4);
     border-radius: 6px;
     padding: 6px 10px;
     cursor: pointer;
@@ -1511,8 +1511,17 @@ html.theme-changing body {
 }
 
 .export-btn-small:hover {
-    background: rgba(102, 126, 234, 0.2);
+    background: rgba(102, 126, 234, 0.35);
     transform: scale(1.05);
+}
+
+[data-theme="dark"] .export-btn-small {
+    background: rgba(102, 126, 234, 0.25);
+    border-color: rgba(102, 126, 234, 0.5);
+}
+
+[data-theme="dark"] .export-btn-small:hover {
+    background: rgba(102, 126, 234, 0.4);
 }
 
 .empty-history {
@@ -1581,23 +1590,41 @@ html.theme-changing body {
 }
 
 .edit-btn-small {
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.4);
 }
 
 .edit-btn-small:hover {
-    background: rgba(59, 130, 246, 0.2);
+    background: rgba(59, 130, 246, 0.35);
     transform: scale(1.1);
+}
+
+[data-theme="dark"] .edit-btn-small {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+[data-theme="dark"] .edit-btn-small:hover {
+    background: rgba(59, 130, 246, 0.4);
 }
 
 .delete-btn-small {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
 .delete-btn-small:hover {
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.35);
     transform: scale(1.1);
+}
+
+[data-theme="dark"] .delete-btn-small {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+[data-theme="dark"] .delete-btn-small:hover {
+    background: rgba(239, 68, 68, 0.4);
 }
 
 .conversion-row {
@@ -2033,12 +2060,12 @@ html.theme-changing body {
     margin: 0;
     font-size: 1.3rem;
     font-weight: 700;
-    color: var(--text-color);
+    color: #ffffff;
     font-family: 'Inter', sans-serif;
 }
 
 [data-theme="dark"] .edit-modal-header h3 {
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .close-modal-btn {
@@ -2092,21 +2119,21 @@ html.theme-changing body {
     margin-bottom: 20px;
 }
 
-.form-group label {
+.edit-modal .form-group label {
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #2c3e50;
+    color: #ffffff !important;
     font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
 }
 
-[data-theme="dark"] .form-group label {
-    color: #e5e7eb;
+[data-theme="dark"] .edit-modal .form-group label {
+    color: var(--text-color) !important;
 }
 
-.edit-input,
-.edit-select {
+.edit-modal .edit-input,
+.edit-modal .edit-select {
     width: 100%;
     padding: 12px 16px;
     border: 1px solid rgba(102, 126, 234, 0.2);
@@ -2117,14 +2144,14 @@ html.theme-changing body {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     transition: all 0.3s ease;
-    color: var(--text-color);
+    color: #ffffff !important;
 }
 
-[data-theme="dark"] .edit-input,
-[data-theme="dark"] .edit-select {
+[data-theme="dark"] .edit-modal .edit-input,
+[data-theme="dark"] .edit-modal .edit-select {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(167, 139, 250, 0.2);
-    color: #ffffff;
+    color: var(--text-color) !important;
 }
 
 .edit-input:focus,
@@ -2275,15 +2302,15 @@ html.theme-changing body {
 }
 
 .save-edit-btn {
-    background: rgba(102, 126, 234, 0.9);
+    background: #4CAF50;
     color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
 }
 
 .save-edit-btn:hover {
-    background: rgba(102, 126, 234, 1);
+    background: #45a049;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
 .save-edit-btn:active {
