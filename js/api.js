@@ -227,7 +227,10 @@ function convertCurrency(amount, fromCurrency, toCurrency, rates, applyArgentine
     let totalTaxes = 0;
     
     if (applyArgentineTaxes && (fromCurrency === 'USD' || fromCurrency === 'EUR') && toCurrency === 'ARS') {
+        console.log('💰 Aplicando impuestos argentinos - isGaming:', isGaming);
         const taxData = getCurrentTaxes();
+        console.log('💰 Impuestos disponibles:', taxData);
+        
         if (taxData.length > 0) {
             let taxMultiplier = 1;
             
@@ -244,22 +247,35 @@ function convertCurrency(amount, fromCurrency, toCurrency, rates, applyArgentine
                     };
                     taxMultiplier += taxValue;
                     totalTaxes += taxAmount;
+                    console.log('✅ IVA aplicado:', taxAmount);
                 }
                 
                 // Aplicar Ganancias solo si no es gaming
-                if (tax.impuesto.toLowerCase() === 'ganancias' && !isGaming) {
-                    const taxAmount = baseConvertedAmount * taxValue;
-                    appliedTaxes.ganancias = {
-                        rate: taxValue,
-                        amount: taxAmount,
-                        description: 'Impuesto a las Ganancias (30%)'
-                    };
-                    taxMultiplier += taxValue;
-                    totalTaxes += taxAmount;
+                if (tax.impuesto.toLowerCase() === 'ganancias') {
+                    if (!isGaming) {
+                        const taxAmount = baseConvertedAmount * taxValue;
+                        appliedTaxes.ganancias = {
+                            rate: taxValue,
+                            amount: taxAmount,
+                            description: 'Impuesto a las Ganancias (30%)'
+                        };
+                        taxMultiplier += taxValue;
+                        totalTaxes += taxAmount;
+                        console.log('✅ Ganancias aplicado:', taxAmount);
+                    } else {
+                        console.log('🎮 Ganancias OMITIDO por ser gaming');
+                        appliedTaxes.ganancias = {
+                            rate: taxValue,
+                            amount: 0,
+                            description: 'Impuesto a las Ganancias (30%) - EXENTO',
+                            exempted: true
+                        };
+                    }
                 }
             });
             
             finalAmount = baseConvertedAmount * taxMultiplier;
+            console.log('💰 Total final - Base:', baseConvertedAmount, 'Multiplicador:', taxMultiplier, 'Final:', finalAmount);
         }
     }
     
