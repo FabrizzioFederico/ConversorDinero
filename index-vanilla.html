@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F&M Rates</title>
+    <!-- Favicon con icono de dinero -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Swiper.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    
+    <!-- Script para cargar tema inmediatamente y evitar flash -->
+    <script>
+        (function() {
+            // Deshabilitar transiciones temporalmente
+            document.documentElement.style.setProperty('--theme-transition-duration', '0s');
+            
+            // Cargar tema guardado inmediatamente
+            const savedTheme = localStorage.getItem('darkMode');
+            if (savedTheme === 'true') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+            
+            // Restaurar transiciones después de que se cargue la página
+            window.addEventListener('load', function() {
+                requestAnimationFrame(function() {
+                    document.documentElement.style.setProperty('--theme-transition-duration', '0.5s');
+                });
+            });
+        })();
+    </script>
+</head>
+<body>
+    <!-- Agregar antes del div.container -->
+    <div class="menu-toggle" id="menuToggle">
+        <span class="hamburger"></span>
+    </div>
+
+    <!-- Botón de modo noche -->
+    <div class="theme-toggle" id="themeToggle">
+        <span class="theme-icon">🌙</span>
+    </div>
+    
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Historial</h2>
+            <button class="close-btn" id="closeMenu">&times;</button>
+        </div>
+        <div class="history-list" id="historyList">
+            <!-- El historial se llenará dinámicamente -->
+        </div>
+        <div class="pagination">
+            <button id="prevPage" class="pagination-btn">‹</button>
+            <span id="pageInfo">Página 1</span>
+            <button id="nextPage" class="pagination-btn">›</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Main Content Layout -->
+    <div class="main-layout">
+        <!-- Conversor Container -->
+        <div class="container converter-container">
+            <h1>F&M Rates</h1>
+            <p class="subtitle">Tener en cuenta: los tipos de cambio se actualizan diariamente y pueden diferir levemente.</p>
+            <div class="converter-box" id="converterBox">
+                <div class="exchange-rate-display" id="exchangeRateDisplay">
+                    <span class="exchange-rate-label">Tipo de cambio medio del mercado</span>
+                    <span class="exchange-rate-value" id="exchangeRateValue">1 USD = 1.00 EUR</span>
+                </div>
+                <input type="number" id="amount" class="input-amount" placeholder="Ingrese cantidad">
+                
+                <div class="currency-selectors">
+                    <select id="fromCurrency" class="currency-select">
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+
+                    <button id="swapButton" class="swap-btn">⇄</button>
+
+                    <select id="toCurrency" class="currency-select">
+                        <option value="EUR">EUR</option>
+                        <option value="USD">USD</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </div>
+
+                <button id="convertButton" class="convert-btn">Guardar conversión</button>
+                <button id="cancelEditButton" class="cancel-btn" style="display: none;">Cancelar</button>
+                
+                <!-- Controles de impuestos argentinos -->
+                <div id="argentineTaxContainer" class="argentine-tax-container" style="display: none;">
+                    <div class="tax-info">
+                        <span class="tax-label">🇦🇷 Conversión con impuestos argentinos</span>
+                        <small class="tax-description">Se aplicarán IVA (21%) e Impuesto a las Ganancias (30%)</small>
+                    </div>
+                    <div class="gaming-checkbox-container">
+                        <label class="gaming-checkbox-label">
+                            <input type="checkbox" id="gamingCheckbox" class="gaming-checkbox">
+                            <span class="checkbox-text">🎮 Compra gaming (sin imp. ganancias)</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="result" class="result">
+                    <div class="result-content">
+                        <span id="convertedAmount">0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Container -->
+        <div class="news-container news-swiper-desktop news-swiper-mobile news-hidden">
+            <h2 class="news-title">Noticias Financieras</h2>
+            
+            <!-- Desktop Swiper (Mousewheel) -->
+            <div class="swiper" id="newsDesktop">
+                <div class="swiper-wrapper" id="newsWrapperDesktop">
+                    <!-- Las noticias se cargarán dinámicamente -->
+                </div>
+                <div class="swiper-pagination"></div>
+            </div>
+
+            <!-- Mobile Swiper (Cards Effect) -->
+            <div class="swiper" id="newsMobile">
+                <div class="swiper-wrapper" id="newsWrapperMobile">
+                    <!-- Las noticias se cargarán dinámicamente -->
+                </div>
+                <div class="swiper-pagination"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">Rates By Exchange Rate API</a>
+    </footer>
+    
+    <!-- Swiper.js Script -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
