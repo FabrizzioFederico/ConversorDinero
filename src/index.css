@@ -2069,6 +2069,25 @@ html.theme-changing body {
     z-index: 1;
 }
 
+/* Contenedor de selectores de moneda en el modal de edición */
+.edit-currency-selectors {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.edit-currency-selectors .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.edit-currency-selectors .swap-btn {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    align-self: flex-end;
+}
+
 .form-group {
     margin-bottom: 20px;
 }

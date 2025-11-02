@@ -8,10 +8,13 @@ function Sidebar({ conversions, onDelete, onEdit, onExport, isOpen, onClose }) {
   const [editForm, setEditForm] = useState({
     amount: '',
     fromCurrency: '',
-    toCurrency: ''
+    toCurrency: '',
+    isGamingPurchase: false
   });
   const [previewResult, setPreviewResult] = useState(null);
   const [isConverting, setIsConverting] = useState(false);
+  const [showArgentineTax, setShowArgentineTax] = useState(false);
+  const [isEditSwapping, setIsEditSwapping] = useState(false);
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -47,6 +50,7 @@ function Sidebar({ conversions, onDelete, onEdit, onExport, isOpen, onClose }) {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: currency,
+      currencyDisplay: 'code',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(value);
@@ -57,10 +61,19 @@ function Sidebar({ conversions, onDelete, onEdit, onExport, isOpen, onClose }) {
     setEditForm({
       amount: conversion.amount,
       fromCurrency: conversion.fromCurrency,
-      toCurrency: conversion.toCurrency
+      toCurrency: conversion.toCurrency,
+      isGamingPurchase: conversion.isGamingPurchase || false
     });
     setPreviewResult(null);
   };
+
+  // Detectar si debe mostrar el checkbox de impuestos argentinos
+  useEffect(() => {
+    const shouldShowTax = 
+      (editForm.fromCurrency === 'USD' || editForm.fromCurrency === 'EUR') && 
+      editForm.toCurrency === 'ARS';
+    setShowArgentineTax(shouldShowTax);
+  }, [editForm.fromCurrency, editForm.toCurrency]);
 
   // Conversión en tiempo real mientras editas
   useEffect(() => {
@@ -73,7 +86,18 @@ function Sidebar({ conversions, onDelete, onEdit, onExport, isOpen, onClose }) {
             editForm.fromCurrency,
             editForm.toCurrency
           );
-          setPreviewResult(data.convertedAmount);
+          
+          let finalAmount = data.convertedAmount;
+          
+          // Aplicar impuestos argentinos si corresponde
+          if (showArgentineTax) {
+            const baseAmount = data.convertedAmount;
+            const iva = baseAmount * 0.21;
+            const ganancias = editForm.isGamingPurchase ? 0 : baseAmount * 0.30;
+            finalAmount = baseAmount + iva + ganancias;
+          }
+          
+          setPreviewResult(finalAmount);
         } catch (error) {
           console.error('Error al convertir:', error);
           setPreviewResult(null);
@@ -90,7 +114,7 @@ function Sidebar({ conversions, onDelete, onEdit, onExport, isOpen, onClose }) {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [editForm.amount, editForm.fromCurrency, editForm.toCurrency]);
+  }, [editForm.amount, editForm.fromCurrency, editForm.toCurrency, editForm.isGamingPurchase, showArgentineTax]);
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
@@ -108,8 +132,21 @@ function Sidebar({ conversions, onDelete, onEdit, onExport, isOpen, onClose }) {
 
   const handleCancelEdit = () => {
     setEditingConversion(null);
-    setEditForm({ amount: '', fromCurrency: '', toCurrency: '' });
+    setEditForm({ amount: '', fromCurrency: '', toCurrency: '', isGamingPurchase: false });
     setPreviewResult(null);
+    setShowArgentineTax(false);
+  };
+
+  const handleEditSwap = () => {
+    setIsEditSwapping(true);
+    setEditForm({
+      ...editForm,
+      fromCurrency: editForm.toCurrency,
+      toCurrency: editForm.fromCurrency
+    });
+    setTimeout(() => {
+      setIsEditSwapping(false);
+    }, 600);
   };
 
   return (
@@ -279,51 +316,85 @@ function Sidebar({ conversions, onDelete, onEdit, onExport, isOpen, onClose }) {
                 />
               </div>
 
-              <div className="form-group">
-                <label>De</label>
-                <div className="select-with-flag">
-                  <img 
-                    src={getFlagUrl(editForm.fromCurrency)} 
-                    alt={editForm.fromCurrency}
-                    className="flag-small"
-                  />
-                  <select
-                    value={editForm.fromCurrency}
-                    onChange={(e) => setEditForm({ ...editForm, fromCurrency: e.target.value })}
-                    required
-                    className="edit-select"
-                  >
-                    {currencies.map(currency => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.code} - {currency.name}
-                      </option>
-                    ))}
-                  </select>
+              <div className="edit-currency-selectors">
+                <div className="form-group">
+                  <label>De</label>
+                  <div className="select-with-flag">
+                    <img 
+                      src={getFlagUrl(editForm.fromCurrency)} 
+                      alt={editForm.fromCurrency}
+                      className="flag-small"
+                    />
+                    <select
+                      value={editForm.fromCurrency}
+                      onChange={(e) => setEditForm({ ...editForm, fromCurrency: e.target.value })}
+                      required
+                      className="edit-select"
+                    >
+                      {currencies.map(currency => (
+                        <option key={currency.code} value={currency.code}>
+                          {currency.code} - {currency.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <button 
+                  type="button"
+                  className={`swap-btn ${isEditSwapping ? 'rotating' : ''}`} 
+                  onClick={handleEditSwap}
+                  title="Intercambiar monedas"
+                >
+                  ⇄
+                </button>
+
+                <div className="form-group">
+                  <label>A</label>
+                  <div className="select-with-flag">
+                    <img 
+                      src={getFlagUrl(editForm.toCurrency)} 
+                      alt={editForm.toCurrency}
+                      className="flag-small"
+                    />
+                    <select
+                      value={editForm.toCurrency}
+                      onChange={(e) => setEditForm({ ...editForm, toCurrency: e.target.value })}
+                      required
+                      className="edit-select"
+                    >
+                      {currencies.map(currency => (
+                        <option key={currency.code} value={currency.code}>
+                          {currency.code} - {currency.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>A</label>
-                <div className="select-with-flag">
-                  <img 
-                    src={getFlagUrl(editForm.toCurrency)} 
-                    alt={editForm.toCurrency}
-                    className="flag-small"
-                  />
-                  <select
-                    value={editForm.toCurrency}
-                    onChange={(e) => setEditForm({ ...editForm, toCurrency: e.target.value })}
-                    required
-                    className="edit-select"
-                  >
-                    {currencies.map(currency => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.code} - {currency.name}
-                      </option>
-                    ))}
-                  </select>
+              {/* Checkbox de compra gaming para conversiones a ARS */}
+              {showArgentineTax && (
+                <div className="argentine-tax-container">
+                  <div className="tax-info">
+                    <span className="tax-label">🇦🇷 Conversión con impuestos argentinos</span>
+                    <small className="tax-description">
+                      Se aplicarán IVA (21%) e Impuesto a las Ganancias (30%)
+                    </small>
+                  </div>
+                  <div className="gaming-checkbox-container">
+                    <label className="gaming-checkbox-label">
+                      <input
+                        type="checkbox"
+                        className="gaming-checkbox"
+                        checked={editForm.isGamingPurchase}
+                        onChange={(e) => setEditForm({ ...editForm, isGamingPurchase: e.target.checked })}
+                      />
+                      <span className="checkbox-text">🎮 Compra gaming (sin imp. ganancias)</span>
+                    </label>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Preview del resultado en tiempo real */}
               {previewResult !== null && (
@@ -337,6 +408,7 @@ function Sidebar({ conversions, onDelete, onEdit, onExport, isOpen, onClose }) {
                         {new Intl.NumberFormat('es-AR', {
                           style: 'currency',
                           currency: editForm.toCurrency,
+                          currencyDisplay: 'code',
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
                         }).format(previewResult)}
