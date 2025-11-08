@@ -3380,7 +3380,7 @@ h1 {
     
     .news-slide {
         padding: 2rem;
-        margin: 2.5rem;
+        margin: 1.5rem;
         min-height: 180px;
     }
     
@@ -3403,7 +3403,6 @@ h1 {
     
     .news-slide {
         padding: 2.5rem;
-        margin: 3rem;
         min-height: 200px;
     }
     
