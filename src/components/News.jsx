@@ -62,48 +62,44 @@ function News() {
 
   const NewsCard = ({ article }) => {
     const timeAgo = formatNewsDate(article.pubDate);
-    const description = article.description.length > 150 
-      ? article.description.substring(0, 150) + '...' 
+    const description = article.description.length > 70 
+      ? article.description.substring(0, 70) + '...' 
       : article.description;
 
+    // Función para manejar error de imagen
+    const handleImageError = (e) => {
+      e.target.onerror = null; // Prevenir loop infinito
+      e.target.src = 'https://via.placeholder.com/400x200/1e3a8a/ffffff?text=El+Economista';
+    };
+
+    // Función para abrir la noticia
+    const handleCardClick = () => {
+      window.open(article.link, '_blank', 'noopener,noreferrer');
+    };
+
     return (
-      <div className="news-slide">
-        {article.thumbnail && (
-          <div className="news-image-container">
-            <img 
-              src={article.thumbnail} 
-              alt={article.title}
-              className="news-image"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-          </div>
-        )}
+      <div className="news-slide" onClick={handleCardClick} role="button" tabIndex={0}>
+        <div className="news-image-container">
+          <img 
+            src={article.thumbnail || 'https://via.placeholder.com/400x200/1e3a8a/ffffff?text=El+Economista'} 
+            alt={article.title}
+            className="news-image"
+            loading="lazy"
+            onError={handleImageError}
+          />
+        </div>
         <div className="news-content">
           <h3 className="news-article-title">{article.title}</h3>
           <p className="news-description">{description}</p>
           <div className="news-meta">
             <div className="news-source-info">
-              <span className="news-source">Ámbito Financiero</span>
-              {article.author && article.author !== 'Ámbito Financiero' && (
+              <span className="news-source">El Economista</span>
+              {article.author && article.author !== 'El Economista' && (
                 <span className="news-author"> • {article.author}</span>
               )}
             </div>
             <span className="news-time">{timeAgo}</span>
           </div>
-        </div>
-        <div className="news-actions">
-          <a 
-            href={article.link} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="news-link"
-          >
-            Leer más
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M7 17L17 7"></path>
-              <path d="M7 7h10v10"></path>
-            </svg>
-          </a>
         </div>
       </div>
     );

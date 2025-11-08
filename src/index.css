@@ -2182,7 +2182,7 @@ html.theme-changing body {
 
 [data-theme="dark"] .select-with-flag {
     background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(167, 139, 250, 0.2);
+    border-color: rgba(167, 139,  250, 0.2);
 }
 
 .select-with-flag:focus-within {
@@ -2204,10 +2204,6 @@ html.theme-changing body {
 
 .select-with-flag .edit-select:focus {
     box-shadow: none;
-}
-
-.select-with-flag .flag-small {
-    flex-shrink: 0;
 }
 
 /* Preview del resultado en tiempo real */
@@ -2976,58 +2972,58 @@ body {
 
 /* Transiciones específicas para elementos principales */
 .converter-box {
-    transition: background-color var(--transition-duration) var(--transition-easing),
-                box-shadow var(--transition-duration) var(--transition-easing),
+    transition: background-color var(--transition-duration) var(--theme-transition-easing),
+                box-shadow var(--transition-duration) var(--theme-transition-easing),
                 transform 0.3s ease;
 }
 
 .input-amount,
 .currency-select {
-    transition: background-color var(--transition-duration) var(--transition-easing),
-                color var(--transition-duration) var(--transition-easing),
-                border-color var(--transition-duration) var(--transition-easing),
+    transition: background-color var(--transition-duration) var(--theme-transition-easing),
+                color var(--transition-duration) var(--theme-transition-easing),
+                border-color var(--transition-duration) var(--theme-transition-easing),
                 box-shadow 0.3s ease;
 }
 
 .result {
-    transition: background-color var(--transition-duration) var(--transition-easing),
-                color var(--transition-duration) var(--transition-easing),
+    transition: background-color var(--transition-duration) var(--theme-transition-easing),
+                color var(--transition-duration) var(--theme-transition-easing),
                 transform 0.3s ease;
 }
 
 .sidebar {
-    transition: background-color var(--transition-duration) var(--transition-easing),
-                color var(--transition-duration) var(--transition-easing),
+    transition: background-color var(--transition-duration) var(--theme-transition-easing),
+                color var(--transition-duration) var(--theme-transition-easing),
                 left 0.3s ease-in-out;
 }
 
 .menu-toggle,
 .theme-toggle {
-    transition: background-color var(--transition-duration) var(--transition-easing),
-                color var(--transition-duration) var(--transition-easing),
-                box-shadow var(--transition-duration) var(--transition-easing),
+    transition: background-color var(--transition-duration) var(--theme-transition-easing),
+                color var(--transition-duration) var(--theme-transition-easing),
+                box-shadow var(--transition-duration) var(--theme-transition-easing),
                 transform 0.3s ease;
 }
 
 .swap-btn {
-    transition: background-color var(--transition-duration) var(--transition-easing),
-                color var(--transition-duration) var(--transition-easing),
+    transition: background-color var(--transition-duration) var(--theme-transition-easing),
+                color var(--transition-duration) var(--theme-transition-easing),
                 transform 0.3s ease;
 }
 
 .hamburger,
 .hamburger::before,
 .hamburger::after {
-    transition: background-color var(--transition-duration) var(--transition-easing),
+    transition: background-color var(--transition-duration) var(--theme-transition-easing),
                 transform 0.3s ease-in-out;
 }
 
 h1 {
-    transition: color var(--transition-duration) var(--transition-easing);
+    transition: color var(--transition-duration) var(--theme-transition-easing);
 }
 
 #convertedAmount {
-    transition: color var(--transition-duration) var(--transition-easing);
+    transition: color var(--transition-duration) var(--theme-transition-easing);
     color: inherit; /* Heredar el color del contenedor padre */
 }
 
@@ -3395,25 +3391,6 @@ h1 {
     }
 }
 
-/* Ajustes específicos para pantallas muy grandes */
-@media (min-width: 1440px) {
-    .news-container {
-        padding: 2.5rem;
-    }
-    
-    .news-slide {
-        padding: 2.5rem;
-        min-height: 200px;
-    }
-    
-    .news-title {
-        font-size: 1.2rem;
-    }
-    
-    .news-description {
-        font-size: 1rem;
-    }
-}
 /* ===== REACT ROUTER STYLES ===== */
 
 /* App Container */
@@ -3968,6 +3945,7 @@ body {
     gap: 1rem;
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(135, 206, 250, 0.2);
     border-radius: 12px;
     padding: 1.5rem;
