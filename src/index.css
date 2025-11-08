@@ -1,5 +1,173 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* ========================================
+   MEJORAS DE TRANSICIÓN DE TEMA
+   ======================================== */
+
+/* Configuración global optimizada */
+:root {
+    /* Swiper */
+    --swiper-theme-color: #007aff;
+    
+    /* Transiciones */
+    --theme-transition-duration: 0.6s;
+    --theme-transition-easing: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --fast-transition: 0.2s ease;
+    --medium-transition: 0.3s ease;
+    --slow-transition: 0.5s ease;
+    --transition-duration: 0.4s;
+    --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Colores - Modo Claro */
+    --bg-color: #f0f8ff;
+    --container-bg: rgba(255, 255, 255, 0.15);
+    --text-color: #2c3e50;
+    --border-color: rgba(135, 206, 250, 0.3);
+    --input-bg: rgba(255, 255, 255, 0.2);
+    --button-bg: #4CAF50;
+    --button-hover: #45a049;
+    --result-bg: rgba(255, 255, 255, 0.15);
+    --sidebar-bg: rgba(255, 255, 255, 0.1);
+    --shadow: rgba(70, 130, 180, 0.3);
+    --shadow-hover: rgba(70, 130, 180, 0.5);
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+}
+
+/* Optimización para prevenir parpadeo */
+html {
+    transition: background-color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+body {
+    transition: 
+        background var(--theme-transition-duration) var(--theme-transition-easing),
+        background-color var(--theme-transition-duration) var(--theme-transition-easing),
+        color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Clase para elementos durante el cambio de tema */
+html.theme-changing {
+    overflow: hidden !important;
+    animation: smoothThemeTransition var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+html.theme-changing body {
+    overflow: hidden !important;
+}
+
+/* Animación suave para todo el viewport */
+@keyframes smoothThemeTransition {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.98;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Transiciones específicas para elementos principales */
+.converter-box,
+.news-container,
+.sidebar,
+.footer,
+.menu-toggle,
+.theme-toggle {
+    transition: 
+        background var(--theme-transition-duration) var(--theme-transition-easing),
+        background-color var(--theme-transition-duration) var(--theme-transition-easing),
+        border-color var(--theme-transition-duration) var(--theme-transition-easing),
+        box-shadow var(--theme-transition-duration) var(--theme-transition-easing),
+        color var(--theme-transition-duration) var(--theme-transition-easing),
+        backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing);
+    will-change: background, background-color, border-color, box-shadow;
+}
+
+/* Optimización de performance */
+.app.transitioning * {
+    transition-property: background, background-color, color, border-color, box-shadow, backdrop-filter !important;
+    transition-duration: var(--theme-transition-duration) !important;
+    transition-timing-function: var(--theme-transition-easing) !important;
+}
+
+/* Prevenir transiciones en elementos interactivos durante cambio de tema */
+html.theme-changing button,
+html.theme-changing input,
+html.theme-changing select,
+html.theme-changing textarea {
+    pointer-events: none;
+}
+
+/* Overlay sutil durante la transición */
+html.theme-changing::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    z-index: 9998;
+    pointer-events: none;
+    animation: fadeOverlay var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+@keyframes fadeOverlay {
+    0%, 100% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.03;
+    }
+}
+
+/* Transiciones optimizadas para textos */
+h1, h2, h3, h4, h5, h6, p, span, a, label {
+    transition: color var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Transiciones para elementos glassmórficos */
+.news-slide,
+.history-item,
+.edit-modal,
+.feature-card,
+.contact-method {
+    transition: 
+        background var(--theme-transition-duration) var(--theme-transition-easing),
+        border-color var(--theme-transition-duration) var(--theme-transition-easing),
+        box-shadow var(--theme-transition-duration) var(--theme-transition-easing),
+        backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing);
+}
+
+/* Mejorar transición del botón de tema */
+.theme-icon {
+    transition: 
+        transform 0.6s var(--theme-transition-easing),
+        opacity 0.3s ease;
+}
+
+.theme-toggle.rotating .theme-icon {
+    transform: rotate(360deg) scale(1.2);
+}
+
+/* Reducir movimiento para usuarios con preferencias de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    html.theme-changing {
+        animation: none !important;
+    }
+}
+
 /* Variables CSS globales para transiciones suaves */
 :root {
     /* Swiper */
@@ -3970,12 +4138,12 @@ body {
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
 }
 
 .submit-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 25px rgba(76, 175, 80, 0.4);
 }
 
 .submit-btn:active {
