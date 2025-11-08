@@ -112,10 +112,19 @@ function News() {
       {isMobile ? (
         // Mobile: Cards effect
         <Swiper
+          key="mobile-swiper" // Key para forzar re-render
           effect="cards"
           grabCursor={true}
+          cardsEffect={{
+            slideShadows: true,
+            perSlideOffset: 8,
+            perSlideRotate: 2,
+          }}
           modules={[EffectCards, Pagination]}
-          pagination={{ clickable: true }}
+          pagination={{ 
+            clickable: true,
+            dynamicBullets: true 
+          }}
           className="news-swiper-mobile"
         >
           {news.map((article, index) => (
@@ -125,13 +134,27 @@ function News() {
           ))}
         </Swiper>
       ) : (
-        // Desktop: Mousewheel effect
+        // Desktop: Mousewheel vertical effect
         <Swiper
+          key="desktop-swiper" // Key para forzar re-render
           direction="vertical"
           slidesPerView={1}
-          spaceBetween={20}
-          mousewheel={true}
-          pagination={{ clickable: true }}
+          spaceBetween={0}
+          centeredSlides={true}
+          centerInsufficientSlides={true}
+          loop={true}
+          loopedSlides={news.length}
+          mousewheel={{
+            sensitivity: 1,
+            releaseOnEdges: false,
+          }}
+          pagination={{ 
+            clickable: true,
+            type: 'bullets',
+            renderBullet: (index, className) => {
+              return `<span class="${className}"></span>`;
+            }
+          }}
           modules={[Pagination, Mousewheel]}
           className="news-swiper-desktop"
         >
