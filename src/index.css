@@ -49,25 +49,20 @@ body {
 /* Clase para elementos durante el cambio de tema */
 html.theme-changing {
     overflow: hidden !important;
-    animation: smoothThemeTransition var(--theme-transition-duration) var(--theme-transition-easing);
+    /* Animación suave removida - puede causar conflictos */
 }
 
 html.theme-changing body {
     overflow: hidden !important;
 }
 
-/* Animación suave para todo el viewport */
+/* REMOVIDO: Animación que puede causar flickering
 @keyframes smoothThemeTransition {
-    0% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.98;
-    }
-    100% {
-        opacity: 1;
-    }
+    0% { opacity: 1; }
+    50% { opacity: 0.98; }
+    100% { opacity: 1; }
 }
+*/
 
 /* Transiciones específicas para elementos principales */
 .converter-box,
@@ -86,14 +81,15 @@ html.theme-changing body {
     will-change: background, background-color, border-color, box-shadow;
 }
 
-/* Optimización de performance */
+/* REMOVIDO: Regla conflictiva que fuerza transiciones globales
 .app.transitioning * {
     transition-property: background, background-color, color, border-color, box-shadow, backdrop-filter !important;
     transition-duration: var(--theme-transition-duration) !important;
     transition-timing-function: var(--theme-transition-easing) !important;
 }
+*/
 
-/* Prevenir transiciones en elementos interactivos durante cambio de tema */
+/* Prevenir interacciones durante cambio de tema */
 html.theme-changing button,
 html.theme-changing input,
 html.theme-changing select,
@@ -101,7 +97,7 @@ html.theme-changing textarea {
     pointer-events: none;
 }
 
-/* Overlay sutil durante la transición */
+/* REMOVIDO: Overlay que puede causar parpadeo visual
 html.theme-changing::before {
     content: '';
     position: fixed;
@@ -114,20 +110,28 @@ html.theme-changing::before {
     pointer-events: none;
     animation: fadeOverlay var(--theme-transition-duration) var(--theme-transition-easing);
 }
+*/
 
+/* REMOVIDO: Animación de overlay
 @keyframes fadeOverlay {
-    0%, 100% {
-        opacity: 0;
-    }
-    50% {
-        opacity: 0.03;
-    }
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.03; }
 }
+*/
 
-/* Transiciones optimizadas para textos */
+/* COMENTADO: Esta transición de color causaba flickering en h3 de noticias
 h1, h2, h3, h4, h5, h6, p, span, a, label {
     transition: color var(--theme-transition-duration) var(--theme-transition-easing);
 }
+*/
+
+/* COMENTADO: Esta regla con !important causaba conflicto. La regla global de h3 es suficiente
+.news-article-title,
+.news-slide h3,
+.news-content h3 {
+    transition: color var(--theme-transition-duration) var(--theme-transition-easing) !important;
+}
+*/
 
 /* Transiciones para elementos glassmórficos */
 .news-slide,
@@ -136,6 +140,7 @@ h1, h2, h3, h4, h5, h6, p, span, a, label {
 .feature-card,
 .contact-method {
     transition: 
+        color var(--theme-transition-duration) var(--theme-transition-easing),
         background var(--theme-transition-duration) var(--theme-transition-easing),
         border-color var(--theme-transition-duration) var(--theme-transition-easing),
         box-shadow var(--theme-transition-duration) var(--theme-transition-easing),
@@ -202,7 +207,7 @@ h1, h2, h3, h4, h5, h6, p, span, a, label {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    /* Transición global para cambios de tema */
+    /* COMENTADO: Esta transición global causa flickering en h3 de noticias
     transition: 
         background-color var(--theme-transition-duration) var(--theme-transition-easing),
         background var(--theme-transition-duration) var(--theme-transition-easing),
@@ -210,6 +215,7 @@ h1, h2, h3, h4, h5, h6, p, span, a, label {
         border-color var(--theme-transition-duration) var(--theme-transition-easing),
         box-shadow var(--theme-transition-duration) var(--theme-transition-easing),
         backdrop-filter var(--theme-transition-duration) var(--theme-transition-easing);
+    */
 }
 
 body {
@@ -413,6 +419,22 @@ body.no-scroll {
     overflow: hidden;
 }
 
+/* Estilos para cuando .news-slide es un enlace */
+a.news-slide-link {
+    text-decoration: none !important;
+    color: inherit !important;
+    display: flex !important;
+}
+
+a.news-slide-link:visited {
+    color: inherit !important;
+}
+
+a.news-slide-link:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
 .news-slide:hover {
     transform: translateY(-3px);
     box-shadow: 
@@ -455,7 +477,7 @@ body.no-scroll {
     font-family: 'Inter', sans-serif;
     font-size: 1rem;
     font-weight: 600;
-    color: #2c3e50;
+    /* color: inherit; */  /* Heredar del h3 global para transición suave */
     margin-bottom: 0.8rem;
     line-height: 1.4;
     display: -webkit-box;
@@ -614,9 +636,10 @@ body.no-scroll {
     color: #ecf0f1;
 }
 
-[data-theme="dark"] .news-slide .news-title {
+/* Comentado: Dejar que h3 herede color global con transición */
+/* [data-theme="dark"] .news-slide .news-title {
     color: #ecf0f1;
-}
+} */
 
 [data-theme="dark"] .news-description {
     color: #bdc3c7;
@@ -1458,6 +1481,7 @@ h1 {
 }
 
 /* Animación de fundido para cambio de tema */
+/* REMOVIDO: Animación que causa zoom y flickering durante transición de tema
 @keyframes themeTransition {
     0% {
         opacity: 1;
@@ -1472,9 +1496,10 @@ h1 {
         transform: scale(1);
     }
 }
+*/
 
 .theme-changing {
-    animation: themeTransition 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    /* animation: themeTransition 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); */
     /* Ocultar barras de scroll durante la transición */
     overflow: hidden !important;
 }
@@ -1487,18 +1512,20 @@ html.theme-changing body {
     scroll-behavior: auto !important;
 }
 
-/* Mejora adicional: transición suave para elementos específicos */
+/* ELIMINADO: Esto causaba conflictos con las transiciones específicas
 .theme-changing * {
     transition-duration: 0.6s !important;
     transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
+*/
 
-/* Transición específica para el fondo del body */
+/* ELIMINADO: Transición desincronizada (0.8s vs 0.6s)
 .theme-changing body {
     transition: 
         background 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
         background-color 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+*/
 
 .hamburger {
     position: relative;
@@ -3131,12 +3158,14 @@ body {
                 color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* COMENTADO: Selector universal causa conflicto con transiciones específicas de h3
 * {
     transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
                 color 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
                 border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
                 box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
+*/
 
 /* Transiciones específicas para elementos principales */
 .converter-box {
@@ -3330,6 +3359,7 @@ h1 {
         width: 100%;
         max-width: 400px;
         min-width: auto;
+        height: 550px; /* Altura fija para mobile */
         order: 2; /* Noticias segundo */
         /* Animación para móvil - slide desde la izquierda */
         transform: translateX(-100%);
@@ -3389,63 +3419,64 @@ h1 {
         padding: 1rem;
     }
     
-    /* Estilos para móvil - fondo sólido para mejor legibilidad */
+    /* Estilos para móvil - mismas transiciones que desktop */
     .news-slide {
-        background: rgba(255, 255, 255, 0.95) !important; /* Fondo casi sólido */
-        backdrop-filter: none !important; /* Sin efecto blur */
-        -webkit-backdrop-filter: none !important;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
         border: 1px solid rgba(135, 206, 250, 0.4);
+        /* Usar las mismas transiciones que desktop (sin !important) */
     }
     
-    /* Texto más contrastado en móvil */
+    /* Texto más contrastado en móvil - heredar transiciones globales */
     .news-slide .news-title {
-        color: #1a252f !important;
         font-weight: 600;
-    }
-    
-    .news-slide .news-description {
-        color: #2c3e50 !important;
+        /* Transición heredada de las reglas globales */
     }
     
     .news-slide .news-source {
-        color: #2980b9 !important;
+        color: #2980b9;
     }
     
     .news-slide .news-author {
-        color: #34495e !important;
+        color: #34495e;
     }
     
     .news-slide .news-time {
-        color: #7f8c8d !important;
+        color: #7f8c8d;
     }
     
-    /* Modo oscuro en móvil */
+    /* Modo oscuro en móvil - mismas transiciones que desktop */
     [data-theme="dark"] .news-slide {
-        background: rgba(30, 30, 30, 0.98) !important;
+        background: rgba(30, 30, 30, 0.98);
         border: 1px solid rgba(255, 255, 255, 0.25);
         box-shadow: 
             0 4px 20px rgba(0, 0, 0, 0.5),
             0 2px 10px rgba(0, 0, 0, 0.3);
+        /* Transiciones heredadas de las reglas globales de .news-slide */
     }
     
-    [data-theme="dark"] .news-slide .news-title {
+    /* Modo oscuro en móvil - sin color hardcodeado para transición suave */
+    /* [data-theme="dark"] .news-slide .news-title {
         color: #ecf0f1 !important;
-    }
+        transition: color var(--theme-transition-duration) var(--theme-transition-easing) !important;
+    } */
     
-    [data-theme="dark"] .news-slide .news-description {
+    /* [data-theme="dark"] .news-slide .news-description {
         color: #bdc3c7 !important;
-    }
+        transition: color var(--theme-transition-duration) var(--theme-transition-easing) !important;
+    } */
     
     [data-theme="dark"] .news-slide .news-source {
-        color: #5dade2 !important;
+        color: #5dade2;
     }
     
     [data-theme="dark"] .news-slide .news-author {
-        color: #95a5a6 !important;
+        color: #95a5a6;
     }
     
     [data-theme="dark"] .news-slide .news-time {
-        color: #7f8c8d !important;
+        color: #7f8c8d;
     }
     
     .news-image {
@@ -3479,36 +3510,75 @@ h1 {
         text-align: left;
     }
     
-    /* ===== SWIPER CARDS EFFECT MOBILE ===== */
+    /* ===== SWIPER MOBILE STYLES (Vertical como Desktop) ===== */
     .news-swiper-mobile {
         width: 100%;
-        height: 500px !important;
-        padding: 20px 10px 50px;
-        overflow: visible !important;
-    }
-    
-    .news-swiper-mobile .swiper-slide {
+        height: 450px !important;
+        padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 20px;
-        width: 90% !important;
-        max-width: 360px;
+    }
+    
+    .news-swiper-mobile .swiper-wrapper {
+        align-items: center !important;
+        display: flex !important;
+        height: 100% !important;
+    }
+    
+    .news-swiper-mobile .swiper-slide {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 100% !important;
+        flex-shrink: 0 !important;
+        pointer-events: auto !important;
     }
     
     .news-swiper-mobile .news-slide {
-        width: 100%;
-        height: 100%;
+        max-height: 420px;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
     }
     
-    /* Paginación para cards effect */
+    .news-swiper-mobile .news-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .news-swiper-mobile .news-article-title {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 0;
+    }
+    
+    .news-swiper-mobile .news-description {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 0;
+    }
+    
+    /* Paginación para mobile */
     .news-swiper-mobile .swiper-pagination {
-        bottom: 10px !important;
+        right: 0.10px !important;
+        left: auto !important;
+        width: auto !important;
+        top: 50% !important;
+        bottom: auto !important;
+        transform: translateY(-50%) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 6px !important;
     }
     
     .news-swiper-mobile .swiper-pagination-bullet {
@@ -3516,35 +3586,32 @@ h1 {
         opacity: 0.5;
         width: 8px;
         height: 8px;
+        margin: 0 !important;
+        transition: all 0.3s ease;
     }
     
     .news-swiper-mobile .swiper-pagination-bullet-active {
         opacity: 1;
-        width: 20px;
+        height: 16px;
+        width: 8px;
         border-radius: 4px;
+        background: var(--primary-color);
     }
     
-    /* Ajustar altura de imagen en cards */
-    .news-swiper-mobile .news-image-container {
-        height: 160px;
-        overflow: hidden;
-        flex-shrink: 0;
+    /* Asegurar que los enlaces funcionen en mobile */
+    .news-swiper-mobile .news-slide-link {
+        pointer-events: auto !important;
+        touch-action: auto !important;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
     }
     
-    .news-swiper-mobile .news-image {
-        height: 100%;
-        width: 100%;
-        object-fit: cover;
-        border-radius: 0;
-        margin: 0;
+    /* Tema oscuro para paginador mobile */
+    [data-theme="dark"] .news-swiper-mobile .swiper-pagination-bullet {
+        background: #5dade2;
     }
     
-    .news-swiper-mobile .news-content {
-        padding: 1rem;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
+    [data-theme="dark"] .news-swiper-mobile .swiper-pagination-bullet-active {
+        background: #3498db;
     }
     
     /* Centrar el título del sidebar en móvil */

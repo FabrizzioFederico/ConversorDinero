@@ -46,10 +46,22 @@ function AppContent() {
   }, [conversions]);
 
   const toggleTheme = () => {
+    // Agregar clase theme-changing
+    document.documentElement.classList.add('theme-changing');
+    
     const newTheme = !isDarkMode;
-    setIsDarkMode(newTheme);
-    localStorage.setItem('darkMode', newTheme.toString());
-    document.documentElement.setAttribute('data-theme', newTheme ? 'dark' : 'light');
+    
+    // Cambiar tema después de un pequeño delay
+    setTimeout(() => {
+      setIsDarkMode(newTheme);
+      localStorage.setItem('darkMode', newTheme.toString());
+      document.documentElement.setAttribute('data-theme', newTheme ? 'dark' : 'light');
+      
+      // Remover clase después de la transición
+      setTimeout(() => {
+        document.documentElement.classList.remove('theme-changing');
+      }, 600);
+    }, 50);
   };
 
   const handleConversionSave = (conversion) => {

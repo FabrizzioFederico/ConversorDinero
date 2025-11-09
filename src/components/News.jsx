@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, Mousewheel, EffectCards } from 'swiper/modules';
+import { Pagination, Mousewheel } from 'swiper/modules';
 import { fetchFinancialNews, formatNewsDate } from '../services/newsAPI';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import 'swiper/css/effect-cards';
 
 function News() {
   const [news, setNews] = useState([]);
@@ -72,13 +71,14 @@ function News() {
       e.target.src = 'https://via.placeholder.com/400x200/1e3a8a/ffffff?text=El+Economista';
     };
 
-    // Función para abrir la noticia
-    const handleCardClick = () => {
-      window.open(article.link, '_blank', 'noopener,noreferrer');
-    };
-
     return (
-      <div className="news-slide" onClick={handleCardClick} role="button" tabIndex={0}>
+      <a 
+        href={article.link} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="news-slide news-slide-link"
+        style={{ textDecoration: 'none', color: 'inherit' }}
+      >
         <div className="news-image-container">
           <img 
             src={article.thumbnail || 'https://via.placeholder.com/400x200/1e3a8a/ffffff?text=El+Economista'} 
@@ -101,7 +101,7 @@ function News() {
             <span className="news-time">{timeAgo}</span>
           </div>
         </div>
-      </div>
+      </a>
     );
   };
 
@@ -109,62 +109,35 @@ function News() {
     <div className="news-container">
       <h2 className="news-title">Noticias Financieras</h2>
       
-      {isMobile ? (
-        // Mobile: Cards effect
-        <Swiper
-          key="mobile-swiper" // Key para forzar re-render
-          effect="cards"
-          grabCursor={true}
-          cardsEffect={{
-            slideShadows: true,
-            perSlideOffset: 8,
-            perSlideRotate: 2,
-          }}
-          modules={[EffectCards, Pagination]}
-          pagination={{ 
-            clickable: true,
-            dynamicBullets: true 
-          }}
-          className="news-swiper-mobile"
-        >
-          {news.map((article, index) => (
-            <SwiperSlide key={article.guid || index}>
-              <NewsCard article={article} />
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      ) : (
-        // Desktop: Mousewheel vertical effect
-        <Swiper
-          key="desktop-swiper" // Key para forzar re-render
-          direction="vertical"
-          slidesPerView={1}
-          spaceBetween={0}
-          centeredSlides={true}
-          centerInsufficientSlides={true}
-          loop={true}
-          loopedSlides={news.length}
-          mousewheel={{
-            sensitivity: 1,
-            releaseOnEdges: false,
-          }}
-          pagination={{ 
-            clickable: true,
-            type: 'bullets',
-            renderBullet: (index, className) => {
-              return `<span class="${className}"></span>`;
-            }
-          }}
-          modules={[Pagination, Mousewheel]}
-          className="news-swiper-desktop"
-        >
-          {news.map((article, index) => (
-            <SwiperSlide key={article.guid || index}>
-              <NewsCard article={article} />
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      )}
+      <Swiper
+        key={isMobile ? "mobile-swiper" : "desktop-swiper"}
+        direction="vertical"
+        slidesPerView={1}
+        spaceBetween={0}
+        centeredSlides={true}
+        centerInsufficientSlides={true}
+        loop={true}
+        loopedSlides={news.length}
+        mousewheel={{
+          sensitivity: 1,
+          releaseOnEdges: false,
+        }}
+        pagination={{ 
+          clickable: true,
+          type: 'bullets',
+          renderBullet: (index, className) => {
+            return `<span class="${className}"></span>`;
+          }
+        }}
+        modules={[Pagination, Mousewheel]}
+        className={isMobile ? "news-swiper-mobile" : "news-swiper-desktop"}
+      >
+        {news.map((article, index) => (
+          <SwiperSlide key={article.guid || index}>
+            <NewsCard article={article} />
+          </SwiperSlide>
+        ))}
+      </Swiper>
     </div>
   );
 }
