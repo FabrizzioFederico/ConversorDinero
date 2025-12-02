@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, Mousewheel } from 'swiper/modules';
+import { Pagination, Mousewheel, EffectCards } from 'swiper/modules';
 import { fetchFinancialNews, formatNewsDate } from '../services/newsAPI';
 import 'swiper/css';
 import 'swiper/css/pagination';
+import 'swiper/css/effect-cards';
 
 function News() {
   const [news, setNews] = useState([]);
@@ -109,35 +110,59 @@ function News() {
     <div className="news-container">
       <h2 className="news-title">Noticias Financieras</h2>
       
-      <Swiper
-        key={isMobile ? "mobile-swiper" : "desktop-swiper"}
-        direction="vertical"
-        slidesPerView={1}
-        spaceBetween={0}
-        centeredSlides={true}
-        centerInsufficientSlides={true}
-        loop={true}
-        loopedSlides={news.length}
-        mousewheel={{
-          sensitivity: 1,
-          releaseOnEdges: false,
-        }}
-        pagination={{ 
-          clickable: true,
-          type: 'bullets',
-          renderBullet: (index, className) => {
-            return `<span class="${className}"></span>`;
-          }
-        }}
-        modules={[Pagination, Mousewheel]}
-        className={isMobile ? "news-swiper-mobile" : "news-swiper-desktop"}
-      >
-        {news.map((article, index) => (
-          <SwiperSlide key={article.guid || index}>
-            <NewsCard article={article} />
-          </SwiperSlide>
-        ))}
-      </Swiper>
+      {/* Swiper para Mobile con EffectCards */}
+      {isMobile ? (
+        <Swiper
+          key="mobile-swiper"
+          effect="cards"
+          grabCursor={true}
+          cardsEffect={{
+            perSlideOffset: 8,
+            perSlideRotate: 2,
+            rotate: true,
+            slideShadows: true,
+          }}
+          modules={[EffectCards]}
+          className="news-swiper-mobile"
+        >
+          {news.map((article, index) => (
+            <SwiperSlide key={article.guid || index}>
+              <NewsCard article={article} />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      ) : (
+        // Swiper para Desktop con scroll vertical
+        <Swiper
+          key="desktop-swiper"
+          direction="vertical"
+          slidesPerView={1}
+          spaceBetween={0}
+          centeredSlides={true}
+          centerInsufficientSlides={true}
+          loop={true}
+          loopedSlides={news.length}
+          mousewheel={{
+            sensitivity: 1,
+            releaseOnEdges: false,
+          }}
+          pagination={{ 
+            clickable: true,
+            type: 'bullets',
+            renderBullet: (index, className) => {
+              return `<span class="${className}"></span>`;
+            }
+          }}
+          modules={[Pagination, Mousewheel]}
+          className="news-swiper-desktop"
+        >
+          {news.map((article, index) => (
+            <SwiperSlide key={article.guid || index}>
+              <NewsCard article={article} />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      )}
     </div>
   );
 }
